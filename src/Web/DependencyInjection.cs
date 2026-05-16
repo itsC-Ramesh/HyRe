@@ -1,4 +1,3 @@
-using Azure.Identity;
 using RC.HyRe.Application.Common.Interfaces;
 using RC.HyRe.Infrastructure.Data;
 using RC.HyRe.Web.Services;
@@ -31,16 +30,5 @@ public static class DependencyInjection
         });
 
         builder.Services.AddCors();
-    }
-
-    public static void AddKeyVaultIfConfigured(this IHostApplicationBuilder builder)
-    {
-        var keyVaultUri = builder.Configuration["AZURE_KEY_VAULT_ENDPOINT"];
-        if (!string.IsNullOrWhiteSpace(keyVaultUri))
-        {
-            builder.Configuration.AddAzureKeyVault(
-                new Uri(keyVaultUri),
-                new DefaultAzureCredential());
-        }
     }
 }
