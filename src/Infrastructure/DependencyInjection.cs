@@ -1,6 +1,8 @@
 using RC.HyRe.Application.Common.Interfaces;
+using RC.HyRe.Application.Common.Interfaces.Repositories;
 using RC.HyRe.Infrastructure.Data;
 using RC.HyRe.Infrastructure.Data.Interceptors;
+using RC.HyRe.Infrastructure.Data.Repositories;
 using RC.HyRe.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -71,5 +73,9 @@ public static class DependencyInjection
         builder.Services.AddTransient<IIdentityService, IdentityService>();
         builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
         builder.Services.AddScoped<IAuditService, AuditService>();
+
+        builder.Services.AddScoped<ICandidateRepository, CandidateRepository>();
+        builder.Services.AddScoped<IRequisitionRepository, RequisitionRepository>();
+        builder.Services.AddScoped<IApplicationRepository, ApplicationRepository>();
     }
 }

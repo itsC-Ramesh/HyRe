@@ -1,0 +1,9 @@
+namespace RC.HyRe.Domain.Enums;
+
+public enum InterviewStatus
+{
+    Scheduled,
+    Completed,
+    Cancelled,
+    NoShow,
+}
