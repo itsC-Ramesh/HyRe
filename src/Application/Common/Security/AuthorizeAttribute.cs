@@ -1,4 +1,4 @@
-﻿namespace RC.HyRe.Application.Common.Security;
+namespace RC.HyRe.Application.Common.Security;
 
 /// <summary>
 /// Specifies the class this attribute is applied to requires authorization.
@@ -20,4 +20,9 @@ public class AuthorizeAttribute : Attribute
     /// Gets or sets the policy name that determines access to the resource.
     /// </summary>
     public string Policy { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets a comma delimited list of permissions that are allowed to access the resource.
+    /// </summary>
+    public string Permissions { get; set; } = string.Empty;
 }

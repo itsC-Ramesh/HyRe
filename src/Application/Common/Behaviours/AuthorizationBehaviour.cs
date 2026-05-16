@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using RC.HyRe.Application.Common.Exceptions;
 using RC.HyRe.Application.Common.Interfaces;
 using RC.HyRe.Application.Common.Security;
@@ -52,6 +52,37 @@ public class AuthorizationBehaviour<TRequest, TResponse> : IPipelineBehavior<TRe
                 }
 
                 // Must be a member of at least one role in roles
+                if (!authorized)
+                {
+                    throw new ForbiddenAccessException();
+                }
+            }
+
+            // Permission-based authorization
+            var authorizeAttributesWithPermissions = authorizeAttributes.Where(a => !string.IsNullOrWhiteSpace(a.Permissions));
+
+            if (authorizeAttributesWithPermissions.Any())
+            {
+                var authorized = false;
+
+                // User's roles mapped to permissions
+                var userPermissions = _user.Roles?
+                    .SelectMany(r => RC.HyRe.Domain.Constants.Permissions.GetPermissionsForRole(r))
+                    .ToHashSet() ?? new HashSet<string>();
+
+                foreach (var permissions in authorizeAttributesWithPermissions.Select(a => a.Permissions.Split(',')))
+                {
+                    foreach (var permission in permissions)
+                    {
+                        if (userPermissions.Contains(permission))
+                        {
+                            authorized = true;
+                            break;
+                        }
+                    }
+                }
+
+                // Must have at least one of the requested permissions
                 if (!authorized)
                 {
                     throw new ForbiddenAccessException();

@@ -2,13 +2,9 @@ using RC.HyRe.Shared;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-builder.AddAzureContainerAppEnvironment("aca-env");
-
 var databaseServer = builder
-    .AddAzurePostgresFlexibleServer(Services.DatabaseServer)
-    .WithPasswordAuthentication()
-    .RunAsContainer(container => 
-        container.WithLifetime(ContainerLifetime.Persistent))
+    .AddPostgres(Services.DatabaseServer)
+    .WithLifetime(ContainerLifetime.Persistent)
     .AddDatabase(Services.Database);
 
 var web = builder.AddProject<Projects.Web>(Services.WebApi)
