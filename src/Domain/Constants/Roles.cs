@@ -12,4 +12,6 @@ public abstract class Roles
     // Convenience groups
     public const string InternalStaff = $"{HrAdmin},{HiringManager},{Interviewer},{Executive}";
     public const string AllRoles = $"{InternalStaff},{Candidate}";
+
+    public static readonly string[] AllRolesArray = [HrAdmin, HiringManager, Interviewer, Executive, Candidate];
 }

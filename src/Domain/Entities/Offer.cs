@@ -56,5 +56,6 @@ public class Offer : HiringBaseEntity
             throw new InvalidOperationException("Only a sent offer can be declined.");
 
         Status = OfferStatus.Declined;
+        AddDomainEvent(new OfferDeclinedEvent(Id, ApplicationId, actorId));
     }
 }

@@ -20,12 +20,17 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
             .IsRequired()
             .HasMaxLength(100);
 
-        // Payload stored as JSONB
-        builder.Property(n => n.Payload)
+        builder.Property(n => n.PayloadJson)
             .HasColumnType("jsonb")
             .IsRequired();
 
-        // Frequent query: unread notifications for a user
+        builder.Property(n => n.DeliveryChannel)
+            .HasMaxLength(50);
+
+        builder.Property(n => n.DeliveryStatus)
+            .HasMaxLength(50);
+
+        builder.HasIndex(n => n.DeliveryStatus);
         builder.HasIndex(n => new { n.RecipientId, n.ReadAt });
 
         builder.Ignore(n => n.DomainEvents);

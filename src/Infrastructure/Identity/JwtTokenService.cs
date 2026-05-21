@@ -69,8 +69,10 @@ public class JwtTokenService : IJwtTokenService
 
         var tokenValidationParameters = new TokenValidationParameters
         {
-            ValidateAudience = false, // Validate later if needed
-            ValidateIssuer = false,
+            ValidateAudience = true,
+            ValidAudience = jwtSettings["Audience"],
+            ValidateIssuer = true,
+            ValidIssuer = jwtSettings["Issuer"],
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!)),
             ValidateLifetime = false // Here we intentionally don't validate lifetime as we are getting an expired token to refresh it

@@ -5,6 +5,7 @@ namespace RC.HyRe.Application.Common.Interfaces;
 public interface IIdentityService
 {
     Task<string?> GetUserNameAsync(string userId);
+    Task<string?> GetUserEmailAsync(string userId);
 
     Task<bool> IsInRoleAsync(string userId, string role);
 

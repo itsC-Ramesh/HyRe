@@ -33,16 +33,17 @@ public class DispatchDomainEventsInterceptor : SaveChangesInterceptor
     {
         if (context == null) return;
 
-        var entities = context.ChangeTracker
-            .Entries<BaseEntity>()
+        var entitiesList = context.ChangeTracker
+            .Entries<IHasDomainEvents>()
             .Where(e => e.Entity.DomainEvents.Any())
-            .Select(e => e.Entity);
+            .Select(e => e.Entity)
+            .ToList();
 
-        var domainEvents = entities
+        var domainEvents = entitiesList
             .SelectMany(e => e.DomainEvents)
             .ToList();
 
-        entities.ToList().ForEach(e => e.ClearDomainEvents());
+        entitiesList.ForEach(e => e.ClearDomainEvents());
 
         foreach (var domainEvent in domainEvents)
             await _mediator.Publish(domainEvent);

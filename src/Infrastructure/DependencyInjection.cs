@@ -4,6 +4,9 @@ using RC.HyRe.Infrastructure.Data;
 using RC.HyRe.Infrastructure.Data.Interceptors;
 using RC.HyRe.Infrastructure.Data.Repositories;
 using RC.HyRe.Infrastructure.Identity;
+using RC.HyRe.Infrastructure.Services;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -28,7 +31,8 @@ public static class DependencyInjection
         builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
             options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
-            options.UseNpgsql(connectionString);
+            options.UseNpgsql(connectionString)
+                   .UseSnakeCaseNamingConvention();
             options.ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
         });
 
@@ -69,13 +73,44 @@ public static class DependencyInjection
             .AddDefaultTokenProviders()
             .AddApiEndpoints();
 
+        builder.Services.AddHangfire(config => config
+            .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+            .UseSimpleAssemblyNameTypeSerializer()
+            .UseRecommendedSerializerSettings()
+            .UsePostgreSqlStorage(c => c.UseNpgsqlConnection(connectionString)));
+
+        var isBuildingOpenApi = Environment.GetCommandLineArgs()
+            .Any(arg => arg.Contains("getdocument") || arg.Contains("swagger") || arg.Contains("openapi"));
+
+        if (!isBuildingOpenApi)
+        {
+            builder.Services.AddHangfireServer();
+        }
+
         builder.Services.AddSingleton(TimeProvider.System);
         builder.Services.AddTransient<IIdentityService, IdentityService>();
         builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
         builder.Services.AddScoped<IAuditService, AuditService>();
 
+        builder.Services.AddTransient<IEmailService, EmailService>();
+        builder.Services.AddScoped<INotificationService, NotificationService>();
+        builder.Services.AddScoped<IBackgroundJobService, BackgroundJobService>();
+
+        // File storage
+        var fileStorageProvider = builder.Configuration.GetSection("FileStorage")["Provider"] ?? "Local";
+        if (fileStorageProvider.Equals("S3", StringComparison.OrdinalIgnoreCase))
+            builder.Services.AddSingleton<IFileStorageService, S3StorageService>();
+        else
+            builder.Services.AddSingleton<IFileStorageService, LocalStorageService>();
+
         builder.Services.AddScoped<ICandidateRepository, CandidateRepository>();
         builder.Services.AddScoped<IRequisitionRepository, RequisitionRepository>();
         builder.Services.AddScoped<IApplicationRepository, ApplicationRepository>();
+        builder.Services.AddScoped<IInterviewRepository, InterviewRepository>();
+        builder.Services.AddScoped<IScorecardRepository, ScorecardRepository>();
+        builder.Services.AddScoped<IOfferRepository, OfferRepository>();
+
+        builder.Services.AddScoped<ITemplateService, TemplateService>();
+        builder.Services.AddScoped<NotificationJobService>();
     }
 }

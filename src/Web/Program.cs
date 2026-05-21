@@ -1,5 +1,7 @@
 using RC.HyRe.Infrastructure.Data;
+using RC.HyRe.Infrastructure.Services;
 using Scalar.AspNetCore;
+using Hangfire;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,9 +15,19 @@ builder.AddWebServices();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+var isBuildingOpenApi = Environment.GetCommandLineArgs()
+    .Any(arg => arg.Contains("getdocument") || arg.Contains("swagger") || arg.Contains("openapi"));
+
+if (app.Environment.IsDevelopment() && !isBuildingOpenApi)
 {
-    await app.InitialiseDatabaseAsync();
+    try
+    {
+        await app.InitialiseDatabaseAsync();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Database initialization skipped/failed: {ex.Message}");
+    }
 }
 else
 {
@@ -24,10 +36,15 @@ else
 }
 
 app.UseHttpsRedirection();
-app.UseCors(static builder => 
+app.UseCors(builder =>
+{
+    var allowedOrigins = app.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+        ?? ["https://localhost:4200"];
     builder.AllowAnyMethod()
         .AllowAnyHeader()
-        .AllowAnyOrigin());
+        .WithOrigins(allowedOrigins)
+        .AllowCredentials();
+});
 
 app.UseFileServer();
 
@@ -38,6 +55,34 @@ app.UseExceptionHandler(options => { });
 app.UseAuthentication();
 app.UseAuthorization();
 
+if (!isBuildingOpenApi)
+{
+    app.UseHangfireDashboard("/hangfire", new DashboardOptions
+    {
+        Authorization = [ new RC.HyRe.Web.Infrastructure.HangfireDashboardAuthorizationFilter() ]
+    });
+
+    // Register recurring notification jobs
+    RecurringJob.AddOrUpdate<NotificationJobService>(
+        "interview-reminders",
+        service => service.SendInterviewRemindersAsync(CancellationToken.None),
+        "*/15 * * * *");
+
+    RecurringJob.AddOrUpdate<NotificationJobService>(
+        "overdue-scorecards",
+        service => service.SendOverdueScorecardRemindersAsync(CancellationToken.None),
+        "0 9 * * *");
+
+    RecurringJob.AddOrUpdate<NotificationJobService>(
+        "stale-approvals",
+        service => service.EscalateStaleApprovalsAsync(CancellationToken.None),
+        "0 9 * * *");
+
+    RecurringJob.AddOrUpdate<NotificationJobService>(
+        "retry-failed-notifications",
+        service => service.RetryFailedNotificationsAsync(CancellationToken.None),
+        "*/30 * * * *");
+}
 
 app.MapDefaultEndpoints();
 app.MapEndpoints(typeof(Program).Assembly);

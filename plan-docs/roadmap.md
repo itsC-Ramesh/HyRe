@@ -29,6 +29,7 @@
 **Solution:** A single internal platform where every stakeholder — candidates, HR, hiring managers, interviewers, and executives — has a role-appropriate self-serve portal. All data lives in one place. All actions trigger the right automated responses.
 
 **Core design principles:**
+
 - Single source of truth — one candidate record, one application record, no duplicates
 - Event-driven — every significant action emits an event; automation reacts to events, not manual triggers
 - Role-scoped — every stakeholder sees exactly what they need, nothing more
@@ -96,6 +97,7 @@ These are shared services consumed by every module. Build these before any featu
 **Purpose:** Login, session management, and permission enforcement across every route and action.
 
 **Features:**
+
 - Email/password login with session tokens (add SSO in Phase 2)
 - Role definitions: `hr_admin`, `hiring_manager`, `interviewer`, `executive`, `candidate`
 - Permission middleware on every API endpoint
@@ -104,6 +106,7 @@ These are shared services consumed by every module. Build these before any featu
 - Audit log of every authenticated action (who did what, when)
 
 **Integrations:**
+
 - All modules check RBAC before returning data
 - Notification engine checks permissions before sending links
 - Candidate portal session scope enforced separately from internal roles
@@ -131,6 +134,7 @@ These are shared services consumed by every module. Build these before any featu
 | `documents` | id, entity_type, entity_id, file_key, type, created_at |
 
 **Integrations:**
+
 - All modules read/write here
 - Events log is append-only (never update, never delete)
 - Analytics reads exclusively from `events_log` to avoid impacting live performance
@@ -142,6 +146,7 @@ These are shared services consumed by every module. Build these before any featu
 **Purpose:** Centralised event bus. Modules emit events; this service routes them to the right delivery channel (email, in-app, webhook).
 
 **Features:**
+
 - Event subscription model — modules publish events, engine routes to subscribers
 - Email delivery via SMTP or SendGrid
 - In-app notification feed (bell icon, unread count)
@@ -150,6 +155,7 @@ These are shared services consumed by every module. Build these before any featu
 - Retry logic on failure (3 attempts, exponential backoff)
 
 **Events consumed (examples):**
+
 - `application.created` → acknowledgement email to candidate
 - `stage.changed` → status email to candidate + internal notification to HR
 - `interview.booked` → calendar invite + reminder emails
@@ -158,6 +164,7 @@ These are shared services consumed by every module. Build these before any featu
 - `approval.pending` (> 48h) → escalation to approver's manager
 
 **Integrations:**
+
 - Pipeline module emits stage-change events
 - Scheduling module emits booking/cancellation events
 - Offer module emits approval and acceptance events
@@ -170,6 +177,7 @@ These are shared services consumed by every module. Build these before any featu
 **Purpose:** Centralised, access-controlled storage for all files: resumes, scorecards, offer letters, onboarding docs.
 
 **Features:**
+
 - Resume upload (PDF, DOCX) with version history
 - Offer letter PDF generation from template
 - Onboarding document templates
@@ -177,6 +185,7 @@ These are shared services consumed by every module. Build these before any featu
 - File metadata stored in `documents` table; binaries in S3-compatible store
 
 **Integrations:**
+
 - Candidate profiles link to resume files
 - Offer module generates and stores signed offer PDFs
 - Onboarding module reads checklist templates
@@ -189,6 +198,7 @@ These are shared services consumed by every module. Build these before any featu
 **Purpose:** Reusable, editable content templates for all outbound content — emails, offer letters, scorecards, onboarding checklists.
 
 **Features:**
+
 - Dynamic variable substitution: `{{candidate.name}}`, `{{role.title}}`, `{{offer.start_date}}`
 - Version control on templates (edit with history)
 - HR-editable via rich text editor (no code required)
@@ -196,6 +206,7 @@ These are shared services consumed by every module. Build these before any featu
 - Template categories: email, offer_letter, scorecard, onboarding_checklist
 
 **Built-in templates to ship on day one:**
+
 - Application acknowledgement email
 - Interview invitation email
 - Rejection email
@@ -203,6 +214,7 @@ These are shared services consumed by every module. Build these before any featu
 - Onboarding day-1 checklist
 
 **Integrations:**
+
 - Comms module uses email templates
 - Offer module uses offer letter template
 - Onboarding module uses checklist templates
@@ -221,6 +233,7 @@ These are shared services consumed by every module. Build these before any featu
 **Purpose:** The starting point for every hiring workflow. Create and approve open roles before any candidate tracking begins.
 
 **Features:**
+
 - Create role: title, department, hiring manager, job description, salary band, target headcount
 - Approval workflow: hiring manager submits → HR admin approves → requisition is live
 - Status: `draft` → `pending_approval` → `open` → `on_hold` → `closed`
@@ -229,6 +242,7 @@ These are shared services consumed by every module. Build these before any featu
 - Internal notes field (not visible to candidates)
 
 **Integrations:**
+
 - Feeds candidate pipeline (applications are scoped to a requisition)
 - Drives interviewer panel assignments
 - Scopes all analytics reports (per-role, per-department)
@@ -241,12 +255,14 @@ These are shared services consumed by every module. Build these before any featu
 **Purpose:** Visual kanban of every candidate across all stages. The primary daily-use view for HR.
 
 **Stages:**
+
 ```
 Applied → Screened → Interview → Offer → Hired
                                        → Rejected (available at any stage)
 ```
 
 **Features:**
+
 - Kanban board per requisition (cards = candidates)
 - Drag-to-move between stages with confirmation prompt
 - Automatic stage-change event emitted on move
@@ -257,6 +273,7 @@ Applied → Screened → Interview → Offer → Hired
 - Filter by: stage, tag, requisition, interviewer, date applied
 
 **Integrations:**
+
 - Writes `stage.changed` events to notification engine on every move
 - Stage = "Interview" links to scheduling module to book
 - Stage = "Offer" links to offer module
@@ -270,6 +287,7 @@ Applied → Screened → Interview → Offer → Hired
 **Purpose:** Single record per candidate. Every piece of information, communication, and activity in one place.
 
 **Sections:**
+
 - **Overview:** Name, email, phone, source, applied roles, current stage
 - **Resume:** Uploaded file + parsed fields (name, experience, education, skills)
 - **Activity timeline:** Every stage change, interview, scorecard, email — in chronological order
@@ -278,12 +296,14 @@ Applied → Screened → Interview → Offer → Hired
 - **Communications:** All emails sent/received, threaded
 
 **Features:**
+
 - Duplicate detection on email address at application time
 - Source tracking: referral, LinkedIn, job board, direct, agency
 - "Applied before" flag if candidate exists from a previous role
 - Link to candidate portal (what the candidate sees)
 
 **Integrations:**
+
 - Profile linked from every pipeline card
 - Scorecards attach directly to profile (via interview → scorecard chain)
 - Comms module logs all email threads here
@@ -296,6 +316,7 @@ Applied → Screened → Interview → Offer → Hired
 **Purpose:** Eliminate calendar back-and-forth. Interviewers share availability; candidates self-book from a link.
 
 **Features:**
+
 - **Interviewer availability:** Each interviewer sets available slots in a weekly calendar UI
 - **Scheduling link:** HR generates a link per candidate; candidate picks from available slots
 - **Panel interviews:** Coordinate multiple interviewers into a single slot (intersection of availability)
@@ -306,10 +327,12 @@ Applied → Screened → Interview → Offer → Hired
 - **No-show handling:** Mark as no-show, option to reschedule or reject
 
 **Calendar sync (Phase 1 — basic):**
+
 - iCal invite attachment in confirmation emails
 - Full Google/Outlook two-way sync in Phase 3
 
 **Integrations:**
+
 - Reads interviewer list from RBAC (only `interviewer` and `hiring_manager` roles)
 - Writes booked slot to `interviews` table on candidate profile
 - Emits `interview.booked` event to notification engine
@@ -322,6 +345,7 @@ Applied → Screened → Interview → Offer → Hired
 **Purpose:** Replace informal, inconsistent interview feedback with structured, comparable evaluations.
 
 **Template structure:**
+
 ```
 Rating dimensions (1–5 scale):
   - Technical / role-specific skills
@@ -337,6 +361,7 @@ Free text:
 ```
 
 **Features:**
+
 - Per-round scorecard (each interview gets its own)
 - Interviewer cannot see other scorecards before submitting their own (blind review)
 - After all scorecards submitted, aggregate view unlocked for hiring manager
@@ -345,6 +370,7 @@ Free text:
 - HR can view all scorecards at any time
 
 **Integrations:**
+
 - Automatically created when interview is booked (from scheduling module)
 - Attached to candidate profile under the relevant application
 - Readable by hiring manager before offer decision
@@ -363,6 +389,7 @@ Free text:
 **Purpose:** Every candidate knows where they stand, automatically. HR stops writing one-off emails.
 
 **Features:**
+
 - **Trigger-based auto-emails:** Stage changes emit emails from predefined templates
 - **Candidate status portal:** Candidates log in (magic link) and see their application status, upcoming interviews, and next steps — no need to email HR asking "where am I?"
 - **Two-way reply threading:** Candidate replies to emails are captured and logged on their profile
@@ -370,6 +397,7 @@ Free text:
 - **Opt-out management:** Candidate can opt out of non-essential comms; mandatory process comms still send
 
 **Automatic triggers:**
+
 | Stage change | Email sent |
 |---|---|
 | Applied | "We received your application" |
@@ -378,6 +406,7 @@ Free text:
 | Offer sent | "Your offer letter is ready" |
 
 **Integrations:**
+
 - All triggers fired by notification engine on `stage.changed` events
 - Email content from template engine (HR can edit templates)
 - All threads logged on candidate profile
@@ -390,29 +419,34 @@ Free text:
 **Purpose:** Every stakeholder has a view built for their job. Nobody needs to ask HR for a status update.
 
 **HR admin view:**
+
 - All open requisitions with candidate counts per stage
 - Full pipeline across all roles (filterable)
 - Overdue actions (pending approvals, overdue scorecards, stalled candidates)
 - Activity feed (today's interviews, recent stage changes)
 
 **Hiring manager view:**
+
 - Roles they own: candidate pipeline per role
 - Scorecards for their roles (read-only until all submitted, then full view)
 - Pending approvals requiring their action
 - Interview calendar for their roles
 
 **Interviewer view:**
+
 - Upcoming interviews (calendar view)
 - Pending scorecards to complete
 - Candidate brief (name, role, CV, interview type) — no other candidate data visible
 
 **Executive view:**
+
 - Org-level funnel: open roles, total pipeline, avg time-to-hire
 - Role health summary (roles with no movement in > 2 weeks flagged)
 - Department-level breakdown
 - No candidate-level data
 
 **Integrations:**
+
 - RBAC gates which data each role can query
 - Reads from data core and events log
 - Interviewer view links to scheduling module
@@ -425,6 +459,7 @@ Free text:
 **Purpose:** Enforce sign-off gates on requisitions and offers. Nothing slips through without the right approvals.
 
 **Features:**
+
 - Configurable approval chains per entity type (requisitions, offers)
 - Email-based approval actions: approver receives email with "Approve" / "Reject" buttons (no login required)
 - Rejection requires a reason (stored in audit log)
@@ -433,10 +468,12 @@ Free text:
 - Audit trail: every approval decision recorded with timestamp and actor
 
 **Default approval chains:**
+
 - New requisition: hiring manager → HR admin
 - Offer letter: HR admin → hiring manager (for compensation review)
 
 **Integrations:**
+
 - Requisition module uses for new role approvals
 - Offer module uses before letter is sent
 - Notification engine sends approval request emails
@@ -449,6 +486,7 @@ Free text:
 **Purpose:** From verbal yes to signed doc to Day 1 checklist — one continuous flow, no manual handoffs.
 
 **Offer flow:**
+
 1. HR initiates offer from candidate profile (stage = Offer)
 2. Offer details entered: salary, start date, role, contract type, expiry date
 3. Offer letter generated from template (dynamic variables substituted)
@@ -458,6 +496,7 @@ Free text:
 7. Stage automatically moves to "Hired" on signature
 
 **Onboarding flow (post-acceptance):**
+
 - Onboarding checklist automatically created on `offer.accepted` event
 - Checklist assigned to HR (internal tasks) and new hire (self-serve tasks)
 - IT provisioning task list generated (email setup, laptop, system access)
@@ -465,6 +504,7 @@ Free text:
 - HR tracks completion; overdue tasks flagged in HR dashboard
 
 **Integrations:**
+
 - Approval workflows gates letter send
 - File store holds generated and signed offer PDFs
 - Template engine generates offer letter content
@@ -497,18 +537,21 @@ Free text:
 | Scorecard distribution | Average ratings per dimension across all interviews |
 
 **Report types:**
+
 - Role report: full funnel for a single requisition
 - Department report: aggregate across all roles in a department
 - Interviewer report: load, scorecard completion rate, average ratings given
 - Executive summary: org-wide, exportable as PDF for leadership review
 
 **Features:**
+
 - Date range filter
 - Department and role filters
 - Scheduled report delivery (weekly email to exec list)
 - CSV export for all data
 
 **Integrations:**
+
 - Reads exclusively from `events_log` (never queries live operational tables)
 - Feeds executive dashboard in stakeholder module
 - Scorecard data joined from `scorecards` table for quality metrics
@@ -521,6 +564,7 @@ Free text:
 **Purpose:** Know which hiring channel produces the best candidates and hires.
 
 **Features:**
+
 - Source tags on application intake links (UTM-style: `?source=linkedin`, `?source=referral`)
 - Source field on candidate profile (auto-populated from link, editable by HR)
 - Source-to-stage funnel: how far do candidates from each source typically get?
@@ -528,6 +572,7 @@ Free text:
 - Cost-per-hire by source (manual cost input by HR per channel)
 
 **Sources tracked:**
+
 - Direct (application link)
 - LinkedIn
 - Job board (configurable: Naukri, Indeed, etc.)
@@ -536,6 +581,7 @@ Free text:
 - Passive / headhunted
 
 **Integrations:**
+
 - Source stored on `candidates` table in data core
 - Analytics module aggregates source data for reports
 - Requisition module shows channel performance per role
@@ -547,6 +593,7 @@ Free text:
 **Purpose:** Find any candidate, role, document, or note instantly across the entire system.
 
 **Features:**
+
 - Full-text search across: candidate names, notes, role titles, company names, skills
 - Advanced filters: stage, requisition, interviewer, source, date applied, date of last activity
 - Saved filter views (e.g. "All strong candidates in engineering roles")
@@ -554,6 +601,7 @@ Free text:
 - Recent searches remembered per user
 
 **Integrations:**
+
 - Reads from data core (indexed for search performance)
 - RBAC filters search results — HR sees all, managers see their roles only
 - Results link to pipeline cards and candidate profiles
@@ -575,6 +623,7 @@ Free text:
 | Job boards (LinkedIn, Naukri, Indeed) | Pull applications directly into pipeline (removes manual import) |
 
 **Integrations:**
+
 - Scheduling module syncs via Google/Outlook Calendar APIs
 - Notification engine routes to Slack channels via webhook
 - Offer module triggers background check webhook on acceptance
@@ -627,6 +676,7 @@ The notification engine subscribes to these events. All automation is event-driv
 ## 10. Data model (core entities)
 
 ### Candidates
+
 ```
 id              UUID, PK
 name            string
@@ -640,6 +690,7 @@ updated_at      timestamp
 ```
 
 ### Requisitions
+
 ```
 id              UUID, PK
 title           string
@@ -655,6 +706,7 @@ updated_at      timestamp
 ```
 
 ### Applications
+
 ```
 id              UUID, PK
 candidate_id    UUID, FK → candidates
@@ -666,6 +718,7 @@ updated_at      timestamp
 ```
 
 ### Interviews
+
 ```
 id              UUID, PK
 application_id  UUID, FK → applications
@@ -679,6 +732,7 @@ created_at      timestamp
 ```
 
 ### Scorecards
+
 ```
 id              UUID, PK
 interview_id    UUID, FK → interviews
@@ -693,6 +747,7 @@ created_at      timestamp
 ```
 
 ### Offers
+
 ```
 id              UUID, PK
 application_id  UUID, FK → applications
@@ -709,6 +764,7 @@ updated_at      timestamp
 ```
 
 ### Events log (append-only)
+
 ```
 id              UUID, PK
 entity_type     string  -- 'application', 'offer', 'interview', etc.

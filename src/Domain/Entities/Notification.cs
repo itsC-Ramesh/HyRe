@@ -1,4 +1,3 @@
-using System.Text.Json;
 using RC.HyRe.Domain.Common;
 
 namespace RC.HyRe.Domain.Entities;
@@ -6,22 +5,29 @@ namespace RC.HyRe.Domain.Entities;
 /// <summary>
 /// An in-app notification delivered to a specific platform user.
 /// ReadAt being null means unread.
-/// Payload is free-form JSONB (varies by notification type).
+/// PayloadJson is free-form JSONB (varies by notification type), stored as a string
+/// to avoid JsonDocument disposal issues with EF Core materialization.
 /// </summary>
 public class Notification : HiringBaseEntity
 {
-    /// <summary>FK → AspNetUsers.Id (string, matches IdentityUser.Id).</summary>
     public required string RecipientId { get; set; }
 
-    /// <summary>Notification type key, e.g. "scorecard.submitted", "offer.approved".</summary>
     public required string Type { get; set; }
 
-    /// <summary>Free-form payload JSONB. Shape depends on Type.</summary>
-    public JsonDocument Payload { get; set; } = JsonDocument.Parse("{}");
+    /// <summary>Raw JSON payload. Mapped to JSONB column via EF configuration.</summary>
+    public string PayloadJson { get; set; } = "{}";
 
     public DateTimeOffset? ReadAt { get; set; }
 
     public bool IsRead => ReadAt.HasValue;
+
+    public string? DeliveryChannel { get; set; }
+
+    public string? DeliveryStatus { get; set; }
+
+    public DateTimeOffset? DeliveredAt { get; set; }
+
+    public string? FailureReason { get; set; }
 
     public void MarkRead()
     {

@@ -206,5 +206,88 @@ public class ApplicationDbContextInitialiser
         await _context.SaveChangesAsync(CancellationToken.None);
 
         _logger.LogInformation("Hiring domain seed data inserted successfully.");
+
+        // ── 7. Built-in email templates ──────────────────────────────────────────
+        if (await _context.Templates.AnyAsync())
+            return;
+
+        var templates = new Template[]
+        {
+            new()
+            {
+                Name = "Application Acknowledgement",
+                Category = TemplateCategory.ApplicationAck,
+                Subject = "Application Received - {{RequisitionTitle}}",
+                Body = "Hi {{CandidateName}},\n\nThank you for applying to our open position! We have successfully received your application.\n\nOur hiring team will review your profile and get back to you shortly.\n\nBest regards,\nThe Hiring Team",
+                IsBuiltIn = true,
+                IsActive = true,
+                Version = 1,
+            },
+            new()
+            {
+                Name = "Interview Invitation",
+                Category = TemplateCategory.InterviewInvite,
+                Subject = "Interview Invitation - {{RequisitionTitle}}",
+                Body = "Hi {{CandidateName}},\n\nWe would like to invite you to interview for the {{RequisitionTitle}} role.\n\nPlease use the following link to select a convenient slot:\n{{ScheduleLink}}\n\nBest regards,\nThe Hiring Team",
+                IsBuiltIn = true,
+                IsActive = true,
+                Version = 1,
+            },
+            new()
+            {
+                Name = "Interview Reminder",
+                Category = TemplateCategory.InterviewReminder,
+                Subject = "Reminder: Interview tomorrow - {{RequisitionTitle}}",
+                Body = "Hi {{CandidateName}},\n\nThis is a reminder that you have an interview scheduled for {{InterviewTime}}.\n\nMeeting link: {{MeetingLink}}\n\nBest regards,\nThe Hiring Team",
+                IsBuiltIn = true,
+                IsActive = true,
+                Version = 1,
+            },
+            new()
+            {
+                Name = "Rejection",
+                Category = TemplateCategory.Rejection,
+                Subject = "Update on your application for {{RequisitionTitle}}",
+                Body = "Hi {{CandidateName}},\n\nThank you for taking the time to apply and speak with us about the {{RequisitionTitle}} position.\n\nUnfortunately, we have decided to proceed with other candidates. We will keep your resume on file for future opportunities.\n\nWe wish you all the best.\n\nSincerely,\nThe Hiring Team",
+                IsBuiltIn = true,
+                IsActive = true,
+                Version = 1,
+            },
+            new()
+            {
+                Name = "Offer Letter",
+                Category = TemplateCategory.OfferLetter,
+                Subject = "Offer Details - {{RequisitionTitle}}",
+                Body = "Hi {{CandidateName}},\n\nWe are thrilled to extend an offer for the {{RequisitionTitle}} position!\n\nPlease log in to your candidate portal to review and sign:\n{{PortalUrl}}\n\nBest regards,\nThe Hiring Team",
+                IsBuiltIn = true,
+                IsActive = true,
+                Version = 1,
+            },
+            new()
+            {
+                Name = "Scorecard Reminder",
+                Category = TemplateCategory.ScorecardReminder,
+                Subject = "Reminder: Scorecard pending for {{CandidateName}}",
+                Body = "Hi {{InterviewerName}},\n\nThis is a reminder to submit your scorecard for the interview with {{CandidateName}} for the {{RequisitionTitle}} role.\n\nPlease complete it at your earliest convenience.\n\nBest regards,\nThe Hiring Team",
+                IsBuiltIn = true,
+                IsActive = true,
+                Version = 1,
+            },
+            new()
+            {
+                Name = "Approval Escalation",
+                Category = TemplateCategory.ApprovalEscalation,
+                Subject = "Escalation: Offer approval overdue - {{RequisitionTitle}}",
+                Body = "Hi {{ApproverName}},\n\nAn offer for {{CandidateName}} for the {{RequisitionTitle}} role has been pending your approval for over 48 hours.\n\nPlease review and take action as soon as possible.\n\nBest regards,\nThe Hiring Team",
+                IsBuiltIn = true,
+                IsActive = true,
+                Version = 1,
+            },
+        };
+
+        _context.Templates.AddRange(templates);
+        await _context.SaveChangesAsync(CancellationToken.None);
+
+        _logger.LogInformation("Built-in email templates seeded successfully.");
     }
 }

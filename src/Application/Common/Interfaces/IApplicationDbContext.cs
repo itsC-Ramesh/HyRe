@@ -21,6 +21,8 @@ public interface IApplicationDbContext
     DbSet<Offer> Offers { get; }
     DbSet<Notification> Notifications { get; }
     DbSet<Document> Documents { get; }
+    DbSet<Template> Templates { get; }
+    DbSet<TemplateVersion> TemplateVersions { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

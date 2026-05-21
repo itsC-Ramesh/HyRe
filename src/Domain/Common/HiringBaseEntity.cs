@@ -9,7 +9,7 @@ namespace RC.HyRe.Domain.Common;
 /// from BaseAuditableEntity — populated automatically by AuditableEntityInterceptor.
 /// Domain events are supported via AddDomainEvent.
 /// </summary>
-public abstract class HiringBaseEntity
+public abstract class HiringBaseEntity : IHasDomainEvents, IAuditableEntity
 {
     public Guid Id { get; set; } = Guid.NewGuid();
 
