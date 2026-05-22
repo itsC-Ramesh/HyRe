@@ -43,4 +43,13 @@ public class PaginatedList<T>
 
         return new PaginatedList<T>(items, totalCount, page, limit);
     }
+
+    /// <summary>
+    /// Creates a PaginatedList from an already-materialised in-memory list.
+    /// Use when the data has been projected or fetched in a separate query.
+    /// </summary>
+    public static PaginatedList<T> Create(IReadOnlyList<T> items, int totalCount, int page, int limit)
+    {
+        return new PaginatedList<T>(items, totalCount, page, limit);
+    }
 }
