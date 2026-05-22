@@ -11,4 +11,6 @@ public interface IInterviewRepository
     Task<PaginatedList<Interview>> GetByInterviewerAsync(string interviewerId, InterviewStatus? statusFilter, int page, int limit, CancellationToken ct = default);
     Task<IReadOnlyList<Interview>> GetUpcomingAsync(TimeSpan within, CancellationToken ct = default);
     Task<IReadOnlyList<Interview>> GetPastDueForScorecardAsync(CancellationToken ct = default);
+    Task AddAsync(Interview interview, CancellationToken ct = default);
+    Task UpdateAsync(Interview interview, CancellationToken ct = default);
 }

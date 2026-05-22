@@ -43,4 +43,10 @@ public class ScorecardRepository : IScorecardRepository
             .AnyAsync(i => i.ApplicationId == applicationId
                         && i.Status == InterviewStatus.Completed
                         && i.Scorecard == null, ct);
+
+    public async Task AddAsync(Scorecard scorecard, CancellationToken ct = default)
+    {
+        _context.Scorecards.Add(scorecard);
+        await _context.SaveChangesAsync(ct);
+    }
 }

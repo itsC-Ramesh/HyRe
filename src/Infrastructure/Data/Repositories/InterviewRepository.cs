@@ -77,4 +77,16 @@ public class InterviewRepository : IInterviewRepository
             .OrderBy(i => i.ScheduledAt)
             .ToListAsync(ct);
     }
+
+    public async Task AddAsync(Interview interview, CancellationToken ct = default)
+    {
+        _context.Interviews.Add(interview);
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task UpdateAsync(Interview interview, CancellationToken ct = default)
+    {
+        _context.Interviews.Update(interview);
+        await _context.SaveChangesAsync(ct);
+    }
 }
