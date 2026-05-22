@@ -8,10 +8,10 @@ public class Scorecards : IEndpointGroup
 {
     public static void Map(RouteGroupBuilder groupBuilder)
     {
-        groupBuilder.MapGet(GetByInterview, "interview/{interviewId}");
-        groupBuilder.MapGet(GetMy, "my");
-        groupBuilder.MapGet(GetByApplication, "application/{applicationId}");
-        groupBuilder.MapPost(Submit, "{id}/submit");
+        groupBuilder.MapGet(GetByInterview, "interview/{interviewId}").RequireAuthorization();
+        groupBuilder.MapGet(GetMy, "my").RequireAuthorization();
+        groupBuilder.MapGet(GetByApplication, "application/{applicationId}").RequireAuthorization();
+        groupBuilder.MapPost(Submit, "{id}/submit").RequireAuthorization();
     }
 
     public static async Task<IResult> GetByInterview(

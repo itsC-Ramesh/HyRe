@@ -9,13 +9,13 @@ public class Interviews : IEndpointGroup
 {
     public static void Map(RouteGroupBuilder groupBuilder)
     {
-        groupBuilder.MapPost(Schedule, "");
-        groupBuilder.MapGet(GetByApplication, "application/{applicationId}");
-        groupBuilder.MapGet(GetMy, "my");
-        groupBuilder.MapPut(Reschedule, "{id}/reschedule");
-        groupBuilder.MapPost(Cancel, "{id}/cancel");
-        groupBuilder.MapPost(NoShow, "{id}/no-show");
-        groupBuilder.MapPost(Complete, "{id}/complete");
+        groupBuilder.MapPost(Schedule, "").RequireAuthorization();
+        groupBuilder.MapGet(GetByApplication, "application/{applicationId}").RequireAuthorization();
+        groupBuilder.MapGet(GetMy, "my").RequireAuthorization();
+        groupBuilder.MapPut(Reschedule, "{id}/reschedule").RequireAuthorization();
+        groupBuilder.MapPost(Cancel, "{id}/cancel").RequireAuthorization();
+        groupBuilder.MapPost(NoShow, "{id}/no-show").RequireAuthorization();
+        groupBuilder.MapPost(Complete, "{id}/complete").RequireAuthorization();
     }
 
     public static async Task<IResult> Schedule(ISender sender, ScheduleInterview command, CancellationToken ct)

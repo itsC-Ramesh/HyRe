@@ -9,15 +9,15 @@ public class Requisitions : IEndpointGroup
 {
     public static void Map(RouteGroupBuilder groupBuilder)
     {
-        groupBuilder.MapPost(Create, "");
-        groupBuilder.MapGet(GetAll, "");
-        groupBuilder.MapGet(GetById, "{id}");
-        groupBuilder.MapPut(Update, "{id}");
-        groupBuilder.MapPost(Submit, "{id}/submit");
-        groupBuilder.MapPost(Approve, "{id}/approve");
-        groupBuilder.MapPost(Reject, "{id}/reject");
-        groupBuilder.MapPost(Hold, "{id}/hold");
-        groupBuilder.MapPost(Close, "{id}/close");
+        groupBuilder.MapPost(Create, "").RequireAuthorization();
+        groupBuilder.MapGet(GetAll, "").RequireAuthorization();
+        groupBuilder.MapGet(GetById, "{id}").RequireAuthorization();
+        groupBuilder.MapPut(Update, "{id}").RequireAuthorization();
+        groupBuilder.MapPost(Submit, "{id}/submit").RequireAuthorization();
+        groupBuilder.MapPost(Approve, "{id}/approve").RequireAuthorization();
+        groupBuilder.MapPost(Reject, "{id}/reject").RequireAuthorization();
+        groupBuilder.MapPost(Hold, "{id}/hold").RequireAuthorization();
+        groupBuilder.MapPost(Close, "{id}/close").RequireAuthorization();
     }
 
     public static async Task<IResult> Create(ISender sender, CreateRequisition command, CancellationToken ct)

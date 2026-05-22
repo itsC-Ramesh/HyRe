@@ -9,11 +9,11 @@ public class Pipeline : IEndpointGroup
 {
     public static void Map(RouteGroupBuilder groupBuilder)
     {
-        groupBuilder.MapGet(GetByRequisition, "requisition/{requisitionId}");
-        groupBuilder.MapGet(GetApplication, "applications/{id}");
-        groupBuilder.MapPost(Advance, "applications/{id}/advance");
-        groupBuilder.MapPost(Reject, "applications/{id}/reject");
-        groupBuilder.MapPost(BulkAdvance, "applications/bulk-advance");
+        groupBuilder.MapGet(GetByRequisition, "requisition/{requisitionId}").RequireAuthorization();
+        groupBuilder.MapGet(GetApplication, "applications/{id}").RequireAuthorization();
+        groupBuilder.MapPost(Advance, "applications/{id}/advance").RequireAuthorization();
+        groupBuilder.MapPost(Reject, "applications/{id}/reject").RequireAuthorization();
+        groupBuilder.MapPost(BulkAdvance, "applications/bulk-advance").RequireAuthorization();
     }
 
     public static async Task<IResult> GetByRequisition(ISender sender, Guid requisitionId, CancellationToken ct)

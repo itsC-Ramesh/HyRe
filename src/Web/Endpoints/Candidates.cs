@@ -9,11 +9,11 @@ public class Candidates : IEndpointGroup
 {
     public static void Map(RouteGroupBuilder groupBuilder)
     {
-        groupBuilder.MapPost(Create, "");
-        groupBuilder.MapGet(GetAll, "");
-        groupBuilder.MapGet(GetById, "{id}");
-        groupBuilder.MapPut(Update, "{id}");
-        groupBuilder.MapPost(Apply, "{id}/apply");
+        groupBuilder.MapPost(Create, "").RequireAuthorization();
+        groupBuilder.MapGet(GetAll, "").RequireAuthorization();
+        groupBuilder.MapGet(GetById, "{id}").RequireAuthorization();
+        groupBuilder.MapPut(Update, "{id}").RequireAuthorization();
+        groupBuilder.MapPost(Apply, "{id}/apply").RequireAuthorization();
     }
 
     public static async Task<IResult> Create(
