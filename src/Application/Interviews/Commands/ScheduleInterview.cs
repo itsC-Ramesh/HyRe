@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using RC.HyRe.Application.Common.Interfaces;
-using RC.HyRe.Application.Common.Interfaces.Repositories;
 using RC.HyRe.Application.Common.Models;
 using RC.HyRe.Application.Common.Security;
 using RC.HyRe.Domain.Constants;
@@ -22,17 +21,10 @@ public record ScheduleInterview(
 public class ScheduleInterviewHandler : IRequestHandler<ScheduleInterview, Result<Guid>>
 {
     private readonly IApplicationDbContext _context;
-    private readonly IInterviewRepository _interviewRepository;
-    private readonly IScorecardRepository _scorecardRepository;
 
-    public ScheduleInterviewHandler(
-        IApplicationDbContext context,
-        IInterviewRepository interviewRepository,
-        IScorecardRepository scorecardRepository)
+    public ScheduleInterviewHandler(IApplicationDbContext context)
     {
         _context = context;
-        _interviewRepository = interviewRepository;
-        _scorecardRepository = scorecardRepository;
     }
 
     public async Task<Result<Guid>> Handle(ScheduleInterview request, CancellationToken ct)
@@ -56,9 +48,9 @@ public class ScheduleInterviewHandler : IRequestHandler<ScheduleInterview, Resul
 
         interview.Book();
 
-        await _interviewRepository.AddAsync(interview, ct);
+        _context.Interviews.Add(interview);
 
-        // Auto-create scorecard for the interviewer
+        // Auto-create scorecard for the interviewer (same transaction)
         var scorecard = new Scorecard
         {
             InterviewId = interview.Id,
@@ -67,7 +59,9 @@ public class ScheduleInterviewHandler : IRequestHandler<ScheduleInterview, Resul
             Concerns = string.Empty
         };
 
-        await _scorecardRepository.AddAsync(scorecard, ct);
+        _context.Scorecards.Add(scorecard);
+
+        await _context.SaveChangesAsync(ct);
 
         return Result.Success(interview.Id);
     }

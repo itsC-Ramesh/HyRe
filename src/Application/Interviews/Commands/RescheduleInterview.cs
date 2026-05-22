@@ -1,4 +1,5 @@
-using RC.HyRe.Application.Common.Interfaces.Repositories;
+using Microsoft.EntityFrameworkCore;
+using RC.HyRe.Application.Common.Interfaces;
 using RC.HyRe.Application.Common.Models;
 using RC.HyRe.Application.Common.Security;
 using RC.HyRe.Domain.Constants;
@@ -11,16 +12,16 @@ public record RescheduleInterview(Guid InterviewId, DateTimeOffset NewScheduledA
 
 public class RescheduleInterviewHandler : IRequestHandler<RescheduleInterview, Result>
 {
-    private readonly IInterviewRepository _repository;
+    private readonly IApplicationDbContext _context;
 
-    public RescheduleInterviewHandler(IInterviewRepository repository)
+    public RescheduleInterviewHandler(IApplicationDbContext context)
     {
-        _repository = repository;
+        _context = context;
     }
 
     public async Task<Result> Handle(RescheduleInterview request, CancellationToken ct)
     {
-        var interview = await _repository.GetByIdAsync(request.InterviewId, ct);
+        var interview = await _context.Interviews.FindAsync([request.InterviewId], ct);
         if (interview is null)
             return Result.Failure("Interview not found.");
 
@@ -28,7 +29,7 @@ public class RescheduleInterviewHandler : IRequestHandler<RescheduleInterview, R
             return Result.Failure("Only scheduled interviews can be rescheduled.");
 
         interview.ScheduledAt = request.NewScheduledAt;
-        await _repository.UpdateAsync(interview, ct);
+        await _context.SaveChangesAsync(ct);
         return Result.Success();
     }
 }

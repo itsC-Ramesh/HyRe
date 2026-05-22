@@ -1,4 +1,5 @@
-using RC.HyRe.Application.Common.Interfaces.Repositories;
+using Microsoft.EntityFrameworkCore;
+using RC.HyRe.Application.Common.Interfaces;
 using RC.HyRe.Application.Common.Models;
 using RC.HyRe.Application.Common.Security;
 using RC.HyRe.Domain.Constants;
@@ -11,16 +12,16 @@ public record MarkNoShow(Guid InterviewId) : IRequest<Result>;
 
 public class MarkNoShowHandler : IRequestHandler<MarkNoShow, Result>
 {
-    private readonly IInterviewRepository _repository;
+    private readonly IApplicationDbContext _context;
 
-    public MarkNoShowHandler(IInterviewRepository repository)
+    public MarkNoShowHandler(IApplicationDbContext context)
     {
-        _repository = repository;
+        _context = context;
     }
 
     public async Task<Result> Handle(MarkNoShow request, CancellationToken ct)
     {
-        var interview = await _repository.GetByIdAsync(request.InterviewId, ct);
+        var interview = await _context.Interviews.FindAsync([request.InterviewId], ct);
         if (interview is null)
             return Result.Failure("Interview not found.");
 
@@ -28,7 +29,7 @@ public class MarkNoShowHandler : IRequestHandler<MarkNoShow, Result>
             return Result.Failure("Only scheduled interviews can be marked as no-show.");
 
         interview.Status = InterviewStatus.NoShow;
-        await _repository.UpdateAsync(interview, ct);
+        await _context.SaveChangesAsync(ct);
         return Result.Success();
     }
 }
