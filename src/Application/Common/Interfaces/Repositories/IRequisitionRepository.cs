@@ -20,4 +20,7 @@ public interface IRequisitionRepository
         int page,
         int limit,
         CancellationToken cancellationToken = default);
+
+    Task AddAsync(Requisition requisition, CancellationToken ct = default);
+    Task UpdateAsync(Requisition requisition, CancellationToken ct = default);
 }

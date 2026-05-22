@@ -47,4 +47,16 @@ public class RequisitionRepository : IRequisitionRepository
 
         return await PaginatedList<Requisition>.CreateAsync(query, page, limit, cancellationToken);
     }
+
+    public async Task AddAsync(Requisition requisition, CancellationToken ct = default)
+    {
+        _context.Requisitions.Add(requisition);
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task UpdateAsync(Requisition requisition, CancellationToken ct = default)
+    {
+        _context.Requisitions.Update(requisition);
+        await _context.SaveChangesAsync(ct);
+    }
 }
