@@ -24,4 +24,6 @@ public interface IApplicationRepository
         Guid candidateId,
         Guid requisitionId,
         CancellationToken cancellationToken = default);
+
+    Task AddAsync(JobApplication application, CancellationToken ct = default);
 }

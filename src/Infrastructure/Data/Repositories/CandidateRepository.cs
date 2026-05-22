@@ -61,4 +61,16 @@ public class CandidateRepository : ICandidateRepository
     public async Task<bool> ExistsWithEmailAsync(string email, CancellationToken cancellationToken = default)
         => await _context.Candidates
             .AnyAsync(c => c.Email == email.ToLowerInvariant(), cancellationToken);
+
+    public async Task AddAsync(Candidate candidate, CancellationToken ct = default)
+    {
+        _context.Candidates.Add(candidate);
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task UpdateAsync(Candidate candidate, CancellationToken ct = default)
+    {
+        _context.Candidates.Update(candidate);
+        await _context.SaveChangesAsync(ct);
+    }
 }

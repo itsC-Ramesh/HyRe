@@ -23,4 +23,7 @@ public interface ICandidateRepository
         CancellationToken cancellationToken = default);
 
     Task<bool> ExistsWithEmailAsync(string email, CancellationToken cancellationToken = default);
+
+    Task AddAsync(Candidate candidate, CancellationToken ct = default);
+    Task UpdateAsync(Candidate candidate, CancellationToken ct = default);
 }

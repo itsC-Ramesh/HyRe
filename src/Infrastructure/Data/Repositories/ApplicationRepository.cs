@@ -55,4 +55,10 @@ public class ApplicationRepository : IApplicationRepository
             .AnyAsync(a => a.CandidateId == candidateId
                         && a.RequisitionId == requisitionId,
                       cancellationToken);
+
+    public async Task AddAsync(JobApplication application, CancellationToken ct = default)
+    {
+        _context.Applications.Add(application);
+        await _context.SaveChangesAsync(ct);
+    }
 }
