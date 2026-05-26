@@ -29,7 +29,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<Document> Documents => Set<Document>();
     public DbSet<Template> Templates => Set<Template>();
+    public DbSet<InterviewerAvailability> InterviewerAvailabilities => Set<InterviewerAvailability>();
     public DbSet<TemplateVersion> TemplateVersions => Set<TemplateVersion>();
+    public DbSet<EventLog> EventLogs => Set<EventLog>();
+    public DbSet<Note> Notes => Set<Note>();
+    public DbSet<Tag> Tags => Set<Tag>();
+    public DbSet<CandidateTag> CandidateTags => Set<CandidateTag>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -207,6 +207,23 @@ public class ApplicationDbContextInitialiser
 
         _logger.LogInformation("Hiring domain seed data inserted successfully.");
 
+        // ── 6.5. Tags ────────────────────────────────────────────────────────────
+        if (!await _context.Tags.AnyAsync())
+        {
+            var tags = new Tag[]
+            {
+                new() { Name = "Urgent", Color = "#EF4444" },
+                new() { Name = "Highly Recommended", Color = "#10B981" },
+                new() { Name = "Requires Follow-up", Color = "#F59E0B" },
+                new() { Name = "Internal Candidate", Color = "#3B82F6" },
+                new() { Name = "Relocation Required", Color = "#8B5CF6" },
+                new() { Name = "Sponsorship Required", Color = "#EC4899" }
+            };
+            _context.Tags.AddRange(tags);
+            await _context.SaveChangesAsync(CancellationToken.None);
+            _logger.LogInformation("Built-in tags seeded successfully.");
+        }
+
         // ── 7. Built-in email templates ──────────────────────────────────────────
         if (await _context.Templates.AnyAsync())
             return;
@@ -229,6 +246,36 @@ public class ApplicationDbContextInitialiser
                 Category = TemplateCategory.InterviewInvite,
                 Subject = "Interview Invitation - {{RequisitionTitle}}",
                 Body = "Hi {{CandidateName}},\n\nWe would like to invite you to interview for the {{RequisitionTitle}} role.\n\nPlease use the following link to select a convenient slot:\n{{ScheduleLink}}\n\nBest regards,\nThe Hiring Team",
+                IsBuiltIn = true,
+                IsActive = true,
+                Version = 1,
+            },
+            new()
+            {
+                Name = "Interview Scheduled",
+                Category = TemplateCategory.InterviewScheduled,
+                Subject = "Interview Scheduled - {{RequisitionTitle}}",
+                Body = "Hi {{CandidateName}},\n\nYour interview for the {{RequisitionTitle}} position has been scheduled.\n\nDate and Time: {{ScheduledAt}}\nDuration: {{DurationMinutes}} minutes\nInterview Type: {{InterviewType}}\n\nMeeting Link: {{MeetingLink}}\n\nPlease make sure to be available at the scheduled time.\n\nBest regards,\nThe Hiring Team",
+                IsBuiltIn = true,
+                IsActive = true,
+                Version = 1,
+            },
+            new()
+            {
+                Name = "Interview Cancelled",
+                Category = TemplateCategory.InterviewCancelled,
+                Subject = "Interview Cancelled - {{RequisitionTitle}}",
+                Body = "Hi {{CandidateName}},\n\nYour interview for the {{RequisitionTitle}} position has been cancelled.\n\nBest regards,\nThe Hiring Team",
+                IsBuiltIn = true,
+                IsActive = true,
+                Version = 1,
+            },
+            new()
+            {
+                Name = "Interview Rescheduled",
+                Category = TemplateCategory.InterviewRescheduled,
+                Subject = "Interview Rescheduled - {{RequisitionTitle}}",
+                Body = "Hi {{CandidateName}},\n\nYour interview for the {{RequisitionTitle}} position has been rescheduled.\n\nNew Date and Time: {{ScheduledAt}}\nDuration: {{DurationMinutes}} minutes\nInterview Type: {{InterviewType}}\n\nMeeting Link: {{MeetingLink}}\n\nPlease make sure to be available at the new scheduled time.\n\nBest regards,\nThe Hiring Team",
                 IsBuiltIn = true,
                 IsActive = true,
                 Version = 1,

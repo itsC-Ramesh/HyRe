@@ -26,6 +26,7 @@ public static class DependencyInjection
         Guard.Against.Null(connectionString, message: $"Connection string '{Services.Database}' not found.");
 
         builder.Services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
+        builder.Services.AddScoped<ISaveChangesInterceptor, EventLogInterceptor>();
         builder.Services.AddScoped<ISaveChangesInterceptor, DispatchDomainEventsInterceptor>();
 
         builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
@@ -91,17 +92,24 @@ public static class DependencyInjection
         builder.Services.AddTransient<IIdentityService, IdentityService>();
         builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
         builder.Services.AddScoped<IAuditService, AuditService>();
+        builder.Services.AddScoped<ITemplateEngine, TemplateEngine>();
 
         builder.Services.AddTransient<IEmailService, EmailService>();
         builder.Services.AddScoped<INotificationService, NotificationService>();
         builder.Services.AddScoped<IBackgroundJobService, BackgroundJobService>();
+        builder.Services.AddScoped<IEventLogService, EventLogService>();
 
         // File storage
-        var fileStorageProvider = builder.Configuration.GetSection("FileStorage")["Provider"] ?? "Local";
-        if (fileStorageProvider.Equals("S3", StringComparison.OrdinalIgnoreCase))
+        if (builder.Configuration["FileStorage:Provider"] == "S3")
+        {
+            builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+            builder.Services.AddAWSService<Amazon.S3.IAmazonS3>();
             builder.Services.AddSingleton<IFileStorageService, S3StorageService>();
+        }
         else
+        {
             builder.Services.AddSingleton<IFileStorageService, LocalStorageService>();
+        }
 
         builder.Services.AddScoped<ICandidateRepository, CandidateRepository>();
         builder.Services.AddScoped<IRequisitionRepository, RequisitionRepository>();
