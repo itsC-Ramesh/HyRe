@@ -18,6 +18,7 @@ public class Requisitions : IEndpointGroup
         groupBuilder.MapPost(Reject, "{id}/reject").RequireAuthorization();
         groupBuilder.MapPost(Hold, "{id}/hold").RequireAuthorization();
         groupBuilder.MapPost(Close, "{id}/close").RequireAuthorization();
+        groupBuilder.MapPost(Clone, "{id}/clone").RequireAuthorization();
     }
 
     public static async Task<IResult> Create(ISender sender, CreateRequisition command, CancellationToken ct)
@@ -99,6 +100,14 @@ public class Requisitions : IEndpointGroup
         return result.Succeeded
             ? TypedResults.Ok(ApiResponse.Ok())
             : TypedResults.BadRequest(ApiResponse.Fail("CLOSE_FAILED", "Failed to close requisition.", result.Errors));
+    }
+
+    public static async Task<IResult> Clone(ISender sender, Guid id, CancellationToken ct)
+    {
+        var result = await sender.Send(new RC.HyRe.Application.Requisitions.Commands.CloneRequisition.CloneRequisitionCommand(id), ct);
+        return result.Succeeded
+            ? TypedResults.Created($"/api/v1/requisitions/{result.Value}", ApiResponse.Ok(result.Value))
+            : TypedResults.BadRequest(ApiResponse.Fail("CLONE_FAILED", "Failed to clone requisition.", result.Errors));
     }
 }
 
