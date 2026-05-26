@@ -29,8 +29,28 @@ public class JobApplication : HiringBaseEntity
     /// Moves the application to a new stage and raises a domain event.
     /// Use this method for all stage transitions — never set Stage directly.
     /// </summary>
+    private static readonly Dictionary<ApplicationStage, ApplicationStage[]> AllowedTransitions = new()
+    {
+        [ApplicationStage.Applied] = new[] { ApplicationStage.Screened, ApplicationStage.Rejected },
+        [ApplicationStage.Screened] = new[] { ApplicationStage.Interview, ApplicationStage.Rejected },
+        [ApplicationStage.Interview] = new[] { ApplicationStage.Offer, ApplicationStage.Rejected },
+        [ApplicationStage.Offer] = new[] { ApplicationStage.Hired, ApplicationStage.Rejected },
+        [ApplicationStage.Hired] = Array.Empty<ApplicationStage>(),
+        [ApplicationStage.Rejected] = Array.Empty<ApplicationStage>(),
+    };
+
     public void AdvanceStage(ApplicationStage newStage, string? actorId = null)
     {
+        if (newStage == ApplicationStage.Rejected)
+        {
+            // Reject() calls AdvanceStage — allow it through the guard
+        }
+        else if (!AllowedTransitions.ContainsKey(Stage) || !AllowedTransitions[Stage].Contains(newStage))
+        {
+            throw new InvalidOperationException(
+                $"Cannot advance from {Stage} to {newStage}.");
+        }
+
         var previousStage = Stage;
         Stage = newStage;
         AddDomainEvent(new ApplicationStageChangedEvent(Id, previousStage, newStage, actorId));
