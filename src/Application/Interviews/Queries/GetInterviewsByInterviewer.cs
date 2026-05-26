@@ -31,7 +31,7 @@ public class GetInterviewsByInterviewerHandler
     {
         var query = _context.Interviews
             .AsNoTracking()
-            .Where(i => i.InterviewerId == _user.Id);
+            .Where(i => i.InterviewerId == _user.Id || i.PanelMemberIds.Contains(_user.Id!));
 
         if (request.StatusFilter.HasValue)
             query = query.Where(i => i.Status == request.StatusFilter.Value);
@@ -57,7 +57,9 @@ public class GetInterviewsByInterviewerHandler
                 i.DurationMin,
                 i.Status,
                 i.MeetingLink,
-                i.Scorecard != null))
+                i.Scorecard != null,
+                i.PanelMemberIds
+            ))
             .ToListAsync(ct);
 
         return Result.Success(PaginatedList<InterviewDto>.Create(items, totalCount, request.Page, request.Limit));

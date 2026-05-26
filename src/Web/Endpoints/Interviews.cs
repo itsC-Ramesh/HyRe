@@ -16,6 +16,8 @@ public class Interviews : IEndpointGroup
         groupBuilder.MapPost(Cancel, "{id}/cancel").RequireAuthorization();
         groupBuilder.MapPost(NoShow, "{id}/no-show").RequireAuthorization();
         groupBuilder.MapPost(Complete, "{id}/complete").RequireAuthorization();
+        groupBuilder.MapGet(GetAvailability, "availability/{interviewerId}").AllowAnonymous();
+        groupBuilder.MapPost(SetAvailability, "availability").RequireAuthorization();
     }
 
     public static async Task<IResult> Schedule(ISender sender, ScheduleInterview command, CancellationToken ct)
@@ -80,6 +82,24 @@ public class Interviews : IEndpointGroup
         return result.Succeeded
             ? TypedResults.Ok(ApiResponse.Ok())
             : TypedResults.BadRequest(ApiResponse.Fail("COMPLETE_FAILED", "Failed to mark completed.", result.Errors));
+    }
+
+    public static async Task<IResult> GetAvailability(
+        ISender sender, string interviewerId, DateTimeOffset from, DateTimeOffset to, CancellationToken ct)
+    {
+        var result = await sender.Send(new GetAvailability(interviewerId, from, to), ct);
+        return result.Succeeded
+            ? TypedResults.Ok(ApiResponse.Ok(result.Value))
+            : TypedResults.BadRequest(ApiResponse.Fail("GET_AVAILABILITY_FAILED", "Failed to retrieve availability.", result.Errors));
+    }
+
+    public static async Task<IResult> SetAvailability(
+        ISender sender, SetAvailability command, CancellationToken ct)
+    {
+        var result = await sender.Send(command, ct);
+        return result.Succeeded
+            ? TypedResults.Ok(ApiResponse.Ok())
+            : TypedResults.BadRequest(ApiResponse.Fail("SET_AVAILABILITY_FAILED", "Failed to set availability.", result.Errors));
     }
 }
 

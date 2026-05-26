@@ -15,7 +15,8 @@ public record ScheduleInterview(
     InterviewType Type,
     DateTimeOffset ScheduledAt,
     int DurationMin,
-    string? MeetingLink
+    string? MeetingLink,
+    List<string>? PanelMemberIds = null
 ) : IRequest<Result<Guid>>;
 
 public class ScheduleInterviewHandler : IRequestHandler<ScheduleInterview, Result<Guid>>
@@ -43,6 +44,7 @@ public class ScheduleInterviewHandler : IRequestHandler<ScheduleInterview, Resul
             ScheduledAt = request.ScheduledAt,
             DurationMin = request.DurationMin,
             MeetingLink = request.MeetingLink,
+            PanelMemberIds = request.PanelMemberIds ?? new(),
             Status = InterviewStatus.Scheduled
         };
 
@@ -50,7 +52,7 @@ public class ScheduleInterviewHandler : IRequestHandler<ScheduleInterview, Resul
 
         _context.Interviews.Add(interview);
 
-        // Auto-create scorecard for the interviewer (same transaction)
+        // Auto-create scorecard for the main interviewer
         var scorecard = new Scorecard
         {
             InterviewId = interview.Id,
@@ -60,6 +62,24 @@ public class ScheduleInterviewHandler : IRequestHandler<ScheduleInterview, Resul
         };
 
         _context.Scorecards.Add(scorecard);
+
+        // Auto-create scorecard for each panel member
+        if (request.PanelMemberIds != null)
+        {
+            foreach (var panelMemberId in request.PanelMemberIds)
+            {
+                // Skip if same as main interviewer
+                if (panelMemberId == request.InterviewerId) continue;
+                
+                _context.Scorecards.Add(new Scorecard
+                {
+                    InterviewId = interview.Id,
+                    InterviewerId = panelMemberId,
+                    Strengths = string.Empty,
+                    Concerns = string.Empty
+                });
+            }
+        }
 
         await _context.SaveChangesAsync(ct);
 

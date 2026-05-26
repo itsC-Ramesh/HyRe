@@ -28,7 +28,9 @@ public class RescheduleInterviewHandler : IRequestHandler<RescheduleInterview, R
         if (interview.Status != InterviewStatus.Scheduled)
             return Result.Failure("Only scheduled interviews can be rescheduled.");
 
+        var oldTime = interview.ScheduledAt;
         interview.ScheduledAt = request.NewScheduledAt;
+        interview.AddDomainEvent(new RC.HyRe.Domain.Events.InterviewRescheduledEvent(interview.Id, interview.ApplicationId, interview.InterviewerId, oldTime, request.NewScheduledAt));
         await _context.SaveChangesAsync(ct);
         return Result.Success();
     }

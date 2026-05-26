@@ -13,5 +13,6 @@ public record InterviewDto(
     int DurationMin,
     InterviewStatus Status,
     string? MeetingLink,
-    bool HasScorecard
+    bool HasScorecard,
+    List<string> PanelMemberIds
 );

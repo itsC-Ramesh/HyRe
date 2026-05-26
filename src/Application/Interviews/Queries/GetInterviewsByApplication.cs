@@ -46,7 +46,8 @@ public class GetInterviewsByApplicationHandler
                 i.DurationMin,
                 i.Status,
                 i.MeetingLink,
-                i.Scorecard != null))
+                i.Scorecard != null,
+                i.PanelMemberIds))
             .ToListAsync(ct);
 
         return Result.Success(PaginatedList<InterviewDto>.Create(items, totalCount, request.Page, request.Limit));

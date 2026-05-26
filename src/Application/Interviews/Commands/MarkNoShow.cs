@@ -29,6 +29,7 @@ public class MarkNoShowHandler : IRequestHandler<MarkNoShow, Result>
             return Result.Failure("Only scheduled interviews can be marked as no-show.");
 
         interview.Status = InterviewStatus.NoShow;
+        interview.AddDomainEvent(new RC.HyRe.Domain.Events.InterviewNoShowEvent(interview.Id, interview.ApplicationId, interview.InterviewerId));
         await _context.SaveChangesAsync(ct);
         return Result.Success();
     }

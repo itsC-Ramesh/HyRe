@@ -29,6 +29,7 @@ public class CancelInterviewHandler : IRequestHandler<CancelInterview, Result>
             return Result.Failure("Only scheduled interviews can be cancelled.");
 
         interview.Status = InterviewStatus.Cancelled;
+        interview.AddDomainEvent(new RC.HyRe.Domain.Events.InterviewCancelledEvent(interview.Id, interview.ApplicationId, interview.InterviewerId, request.Reason));
         await _context.SaveChangesAsync(ct);
         return Result.Success();
     }
