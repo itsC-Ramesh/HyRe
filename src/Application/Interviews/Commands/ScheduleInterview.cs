@@ -36,6 +36,39 @@ public class ScheduleInterviewHandler : IRequestHandler<ScheduleInterview, Resul
         if (application is null)
             return Result.Failure<Guid>("Application not found.");
 
+        // Check for scheduling conflicts with main interviewer
+        var requestedEnd = request.ScheduledAt.AddMinutes(request.DurationMin);
+        var hasConflict = await _context.Interviews
+            .AnyAsync(i =>
+                i.InterviewerId == request.InterviewerId &&
+                i.Status != InterviewStatus.Cancelled &&
+                i.ScheduledAt < requestedEnd &&
+                i.ScheduledAt.AddMinutes(i.DurationMin) > request.ScheduledAt,
+            ct);
+
+        if (hasConflict)
+            return Result.Failure<Guid>("Interviewer has a conflicting interview at this time.");
+
+        // Check panel members for conflicts
+        if (request.PanelMemberIds?.Count > 0)
+        {
+            foreach (var panelId in request.PanelMemberIds)
+            {
+                if (panelId == request.InterviewerId) continue;
+
+                var panelConflict = await _context.Interviews
+                    .AnyAsync(i =>
+                        i.InterviewerId == panelId &&
+                        i.Status != InterviewStatus.Cancelled &&
+                        i.ScheduledAt < requestedEnd &&
+                        i.ScheduledAt.AddMinutes(i.DurationMin) > request.ScheduledAt,
+                    ct);
+
+                if (panelConflict)
+                    return Result.Failure<Guid>($"Panel member {panelId} has a conflicting interview.");
+            }
+        }
+
         var interview = new Interview
         {
             ApplicationId = request.ApplicationId,
@@ -51,6 +84,18 @@ public class ScheduleInterviewHandler : IRequestHandler<ScheduleInterview, Resul
         interview.Book();
 
         _context.Interviews.Add(interview);
+
+        // Mark matching availability slot as booked
+        var matchingSlot = await _context.InterviewerAvailabilities
+            .FirstOrDefaultAsync(a =>
+                a.InterviewerId == request.InterviewerId &&
+                !a.IsBooked &&
+                a.StartTime <= request.ScheduledAt &&
+                a.EndTime >= request.ScheduledAt.AddMinutes(request.DurationMin),
+            ct);
+
+        if (matchingSlot != null)
+            matchingSlot.IsBooked = true;
 
         // Auto-create scorecard for the main interviewer
         var scorecard = new Scorecard
