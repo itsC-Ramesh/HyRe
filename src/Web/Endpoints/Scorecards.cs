@@ -11,7 +11,9 @@ public class Scorecards : IEndpointGroup
         groupBuilder.MapGet(GetByInterview, "interview/{interviewId}").RequireAuthorization();
         groupBuilder.MapGet(GetMy, "my").RequireAuthorization();
         groupBuilder.MapGet(GetByApplication, "application/{applicationId}").RequireAuthorization();
+        groupBuilder.MapGet(GetSummary, "application/{applicationId}/summary").RequireAuthorization();
         groupBuilder.MapPost(Submit, "{id}/submit").RequireAuthorization();
+        groupBuilder.MapPut(Draft, "{id}/draft").RequireAuthorization();
     }
 
     public static async Task<IResult> GetByInterview(
@@ -56,6 +58,28 @@ public class Scorecards : IEndpointGroup
             ? TypedResults.Ok(ApiResponse.Ok())
             : TypedResults.BadRequest(ApiResponse.Fail("SUBMIT_FAILED", "Failed to submit scorecard.", result.Errors));
     }
+
+    public static async Task<IResult> GetSummary(
+        ISender sender, Guid applicationId, CancellationToken ct)
+    {
+        var result = await sender.Send(new GetScorecardSummary(applicationId), ct);
+        return result.Succeeded
+            ? TypedResults.Ok(ApiResponse.Ok(result.Value))
+            : TypedResults.BadRequest(ApiResponse.Fail("SUMMARY_FAILED", "Failed to retrieve summary.", result.Errors));
+    }
+
+    public static async Task<IResult> Draft(
+        ISender sender, Guid id, SaveDraftBody body, CancellationToken ct)
+    {
+        var command = new SaveScorecardDraft(
+            id, body.Ratings, body.Recommendation,
+            body.Strengths, body.Concerns, body.Notes);
+
+        var result = await sender.Send(command, ct);
+        return result.Succeeded
+            ? TypedResults.Ok(ApiResponse.Ok())
+            : TypedResults.BadRequest(ApiResponse.Fail("DRAFT_FAILED", "Failed to save draft.", result.Errors));
+    }
 }
 
 public record SubmitScorecardBody(
@@ -63,5 +87,13 @@ public record SubmitScorecardBody(
     string Recommendation,
     string Strengths,
     string Concerns,
+    string? Notes
+);
+
+public record SaveDraftBody(
+    Dictionary<string, int>? Ratings,
+    string? Recommendation,
+    string? Strengths,
+    string? Concerns,
     string? Notes
 );
