@@ -22,7 +22,12 @@ public interface IApplicationDbContext
     DbSet<Notification> Notifications { get; }
     DbSet<Document> Documents { get; }
     DbSet<Template> Templates { get; }
+    DbSet<InterviewerAvailability> InterviewerAvailabilities { get; }
     DbSet<TemplateVersion> TemplateVersions { get; }
+    DbSet<EventLog> EventLogs { get; }
+    DbSet<Note> Notes { get; }
+    DbSet<Tag> Tags { get; }
+    DbSet<CandidateTag> CandidateTags { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }
