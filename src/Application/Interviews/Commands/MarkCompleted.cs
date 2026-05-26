@@ -28,7 +28,7 @@ public class MarkCompletedHandler : IRequestHandler<MarkCompleted, Result>
         if (interview.Status != InterviewStatus.Scheduled)
             return Result.Failure("Only scheduled interviews can be marked as completed.");
 
-        interview.Status = InterviewStatus.Completed;
+        interview.Complete();
         await _context.SaveChangesAsync(ct);
         return Result.Success();
     }

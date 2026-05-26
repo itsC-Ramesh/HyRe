@@ -42,4 +42,10 @@ public class Interview : HiringBaseEntity
         Status = InterviewStatus.Scheduled;
         AddDomainEvent(new InterviewBookedEvent(Id, ApplicationId, InterviewerId, actorId));
     }
+
+    public void Complete()
+    {
+        Status = InterviewStatus.Completed;
+        AddDomainEvent(new InterviewCompletedEvent(Id, ApplicationId));
+    }
 }

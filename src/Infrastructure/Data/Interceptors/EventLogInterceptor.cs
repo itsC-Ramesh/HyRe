@@ -128,7 +128,14 @@ public class EventLogInterceptor : SaveChangesInterceptor
                 ActorId = null,
                 PayloadJson = "{}"
             },
-            // We will add more events here as they are created
+            InterviewCompletedEvent e => new EventLog
+            {
+                EntityType = "interview",
+                EntityId = e.InterviewId,
+                Action = "interview.completed",
+                ActorId = null,
+                PayloadJson = "{}"
+            },
             _ => null
         };
     }
