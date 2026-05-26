@@ -4,6 +4,9 @@ public enum TemplateCategory
 {
     ApplicationAck,
     InterviewInvite,
+    InterviewScheduled,
+    InterviewCancelled,
+    InterviewRescheduled,
     InterviewReminder,
     Rejection,
     OfferLetter,

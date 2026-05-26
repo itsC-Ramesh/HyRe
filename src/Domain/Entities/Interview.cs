@@ -26,6 +26,9 @@ public class Interview : HiringBaseEntity
 
     public string? MeetingLink { get; set; }
 
+    /// <summary>IDs of additional panel members (AspNetUsers.Id).</summary>
+    public List<string> PanelMemberIds { get; set; } = new();
+
     // Navigation
     public JobApplication Application { get; set; } = null!;
     public Scorecard? Scorecard { get; set; }

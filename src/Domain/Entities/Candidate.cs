@@ -27,4 +27,5 @@ public class Candidate : HiringBaseEntity
     // Navigation
     public Document? ResumeDocument { get; set; }
     public ICollection<JobApplication> Applications { get; set; } = [];
+    public ICollection<CandidateTag> Tags { get; set; } = [];
 }
