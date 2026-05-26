@@ -1,23 +1,23 @@
-<header>
-  <nav>
-    <ul>
-      <li><a class="nav-brand" [routerLink]="['/']">Clean Architecture</a></li>
-    </ul>
-    <ul>
-      <li><a [routerLink]="['/']" [routerLinkActive]="['pico-active']" [routerLinkActiveOptions]="{ exact: true }">Home</a></li>
+<nav class="nav-container">
+  <div class="nav-brand">
+    <a [routerLink]="['/']">HyRe</a>
+  </div>
+  <ul class="nav-links">
+    <li><a [routerLink]="['/']" [routerLinkActive]="['pico-active']" [routerLinkActiveOptions]="{ exact: true }">Home</a></li>
+    @if (isAuthenticated$ | async) {
       <li><a [routerLink]="['/requisitions']" [routerLinkActive]="['pico-active']">Requisitions</a></li>
+      <li><a [routerLink]="['/candidates']" [routerLinkActive]="['pico-active']">Candidates</a></li>
       <li><a [routerLink]="['/interviewer']" [routerLinkActive]="['pico-active']">Interviews</a></li>
-      <li><a [routerLink]="['/todo']" [routerLinkActive]="['pico-active']">Tasks</a></li>
-    </ul>
-    <ul>
-      @if (isAuthenticated$ | async) {
-        <li><a href="#" (click)="logout($event)">Log out</a></li>
-      } @else {
-        <li><a [routerLink]="['/login']" [routerLinkActive]="['pico-active']">Log in</a></li>
-        <li><a [routerLink]="['/register']" [routerLinkActive]="['pico-active']">Register</a></li>
-      }
-      <li aria-hidden="true" class="nav-separator"></li>
+    }
+  </ul>
+  <div class="nav-actions">
+    @if (isAuthenticated$ | async) {
       <li><app-theme-toggle /></li>
-    </ul>
-  </nav>
-</header>
+      <li><a (click)="logout($event)" class="logout-link">Logout</a></li>
+    } @else {
+      <li><a [routerLink]="['/login']" [routerLinkActive]="['pico-active']">Log in</a></li>
+      <li><a [routerLink]="['/register']" [routerLinkActive]="['pico-active']">Register</a></li>
+      <li><app-theme-toggle /></li>
+    }
+  </div>
+</nav>
