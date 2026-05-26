@@ -3,6 +3,7 @@ using System;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using RC.HyRe.Infrastructure.Data;
@@ -12,9 +13,11 @@ using RC.HyRe.Infrastructure.Data;
 namespace RC.HyRe.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260524122035_AddEventLog")]
+    partial class AddEventLog
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -314,33 +317,6 @@ namespace RC.HyRe.Infrastructure.Migrations
                     b.ToTable("candidates", (string)null);
                 });
 
-            modelBuilder.Entity("RC.HyRe.Domain.Entities.CandidateTag", b =>
-                {
-                    b.Property<Guid>("CandidateId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("candidate_id");
-
-                    b.Property<Guid>("TagId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("tag_id");
-
-                    b.Property<DateTimeOffset>("AssignedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("assigned_at");
-
-                    b.Property<string>("AssignedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("assigned_by");
-
-                    b.HasKey("CandidateId", "TagId")
-                        .HasName("pk_candidate_tags");
-
-                    b.HasIndex("TagId")
-                        .HasDatabaseName("ix_candidate_tags_tag_id");
-
-                    b.ToTable("candidate_tags", (string)null);
-                });
-
             modelBuilder.Entity("RC.HyRe.Domain.Entities.Document", b =>
                 {
                     b.Property<Guid>("Id")
@@ -587,53 +563,6 @@ namespace RC.HyRe.Infrastructure.Migrations
                         .HasDatabaseName("ix_job_applications_requisition_id_stage");
 
                     b.ToTable("job_applications", (string)null);
-                });
-
-            modelBuilder.Entity("RC.HyRe.Domain.Entities.Note", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("content");
-
-                    b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("created_by");
-
-                    b.Property<Guid>("EntityId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("entity_id");
-
-                    b.Property<string>("EntityType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("entity_type");
-
-                    b.Property<DateTimeOffset>("LastModified")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_modified");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("last_modified_by");
-
-                    b.HasKey("Id")
-                        .HasName("pk_notes");
-
-                    b.HasIndex("EntityType", "EntityId")
-                        .HasDatabaseName("ix_notes_entity_type_entity_id");
-
-                    b.ToTable("notes", (string)null);
                 });
 
             modelBuilder.Entity("RC.HyRe.Domain.Entities.Notification", b =>
@@ -986,50 +915,6 @@ namespace RC.HyRe.Infrastructure.Migrations
                         .HasDatabaseName("ix_scorecards_interview_id");
 
                     b.ToTable("scorecards", (string)null);
-                });
-
-            modelBuilder.Entity("RC.HyRe.Domain.Entities.Tag", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Color")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("color");
-
-                    b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTimeOffset>("LastModified")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_modified");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("last_modified_by");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("name");
-
-                    b.HasKey("Id")
-                        .HasName("pk_tags");
-
-                    b.HasIndex("Name")
-                        .IsUnique()
-                        .HasDatabaseName("ix_tags_name");
-
-                    b.ToTable("tags", (string)null);
                 });
 
             modelBuilder.Entity("RC.HyRe.Domain.Entities.Template", b =>
@@ -1409,27 +1294,6 @@ namespace RC.HyRe.Infrastructure.Migrations
                     b.Navigation("ResumeDocument");
                 });
 
-            modelBuilder.Entity("RC.HyRe.Domain.Entities.CandidateTag", b =>
-                {
-                    b.HasOne("RC.HyRe.Domain.Entities.Candidate", "Candidate")
-                        .WithMany("Tags")
-                        .HasForeignKey("CandidateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_candidate_tags_candidates_candidate_id");
-
-                    b.HasOne("RC.HyRe.Domain.Entities.Tag", "Tag")
-                        .WithMany()
-                        .HasForeignKey("TagId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_candidate_tags_tags_tag_id");
-
-                    b.Navigation("Candidate");
-
-                    b.Navigation("Tag");
-                });
-
             modelBuilder.Entity("RC.HyRe.Domain.Entities.Interview", b =>
                 {
                     b.HasOne("RC.HyRe.Domain.Entities.JobApplication", "Application")
@@ -1558,8 +1422,6 @@ namespace RC.HyRe.Infrastructure.Migrations
             modelBuilder.Entity("RC.HyRe.Domain.Entities.Candidate", b =>
                 {
                     b.Navigation("Applications");
-
-                    b.Navigation("Tags");
                 });
 
             modelBuilder.Entity("RC.HyRe.Domain.Entities.Document", b =>
