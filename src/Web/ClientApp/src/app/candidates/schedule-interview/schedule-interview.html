@@ -1,0 +1,62 @@
+<div class="form-container">
+  <header class="form-header">
+    <div class="header-text">
+      <h2>Schedule Interview</h2>
+      <p>Coordinate an interview session with the candidate.</p>
+    </div>
+  </header>
+
+  <form [formGroup]="scheduleForm" (ngSubmit)="onSubmit()" class="glass-form">
+    
+    <div class="form-group">
+      <label for="interviewerId">Assign Interviewer <span class="required">*</span></label>
+      <select id="interviewerId" formControlName="interviewerId">
+        <option value="">Select interviewer...</option>
+        <option value="user-1">Michael Scott</option>
+        <option value="user-2">Pam Beesly</option>
+        <option value="user-3">Jim Halpert</option>
+      </select>
+      <small class="error" *ngIf="scheduleForm.get('interviewerId')?.touched && scheduleForm.get('interviewerId')?.invalid">
+        Interviewer selection is required.
+      </small>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group half">
+        <label for="type">Interview Type <span class="required">*</span></label>
+        <select id="type" formControlName="type">
+          <option value="0">Phone Screen</option>
+          <option value="1">Video Call</option>
+          <option value="2">Technical Challenge</option>
+          <option value="3">Onsite</option>
+          <option value="4">Culture Fit</option>
+        </select>
+      </div>
+
+      <div class="form-group half">
+        <label for="durationMin">Duration (minutes) <span class="required">*</span></label>
+        <input type="number" id="durationMin" formControlName="durationMin" step="15" min="15" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="scheduledAt">Date & Time <span class="required">*</span></label>
+      <input type="datetime-local" id="scheduledAt" formControlName="scheduledAt" />
+      <small class="error" *ngIf="scheduleForm.get('scheduledAt')?.touched && scheduleForm.get('scheduledAt')?.invalid">
+        Valid date and time is required.
+      </small>
+    </div>
+
+    <div class="form-group">
+      <label for="meetingLink">Meeting Link (Optional)</label>
+      <input type="url" id="meetingLink" formControlName="meetingLink" placeholder="https://zoom.us/j/..." />
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="secondary-btn" (click)="cancel()">Cancel</button>
+      <button type="submit" class="primary-btn" [disabled]="isSubmitting || scheduleForm.invalid" [attr.aria-busy]="isSubmitting">
+        Confirm Booking
+      </button>
+    </div>
+  </form>
+</div>

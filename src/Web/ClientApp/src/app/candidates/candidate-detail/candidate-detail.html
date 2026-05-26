@@ -1,0 +1,61 @@
+<div class="candidate-container" *ngIf="!isLoading && candidate">
+  <div class="profile-layout">
+    
+    <!-- Left Column: Profile Info -->
+    <aside class="profile-sidebar">
+      <div class="avatar-header">
+        <div class="avatar">{{ candidate.name.charAt(0) }}</div>
+        <h2>{{ candidate.name }}</h2>
+        <p class="role-applied">Applying for Senior Software Engineer</p>
+      </div>
+
+      <div class="contact-info">
+        <div class="info-item">
+          <lucide-icon name="phone" [size]="18"></lucide-icon>
+          <span>{{ candidate.phone }}</span>
+        </div>
+        <div class="info-item">
+          <lucide-icon name="share-2" [size]="18"></lucide-icon>
+          <span>{{ candidate.source }} - {{ candidate.sourceDetail }}</span>
+        </div>
+      </div>
+
+      <div class="tags-section">
+        <h3>Tags</h3>
+        <div class="tags-list">
+          <span class="tag" *ngFor="let tag of candidate.tags">{{ tag }}</span>
+          <button class="add-tag-btn"><lucide-icon name="plus" [size]="14"></lucide-icon></button>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="primary-btn">Schedule Interview</button>
+        <button class="secondary-btn">Add Note</button>
+      </div>
+    </aside>
+
+    <!-- Right Column: Activity Feed -->
+    <main class="feed-section">
+      <h3>Activity Feed</h3>
+      <div class="timeline">
+        <div class="timeline-event" *ngFor="let event of feedEvents">
+          <div class="event-icon">
+            <lucide-icon [name]="getIconForEvent(event.eventType)" [size]="20"></lucide-icon>
+          </div>
+          <div class="event-content">
+            <div class="event-header">
+              <h4>{{ event.eventType }}</h4>
+              <span class="event-time">{{ event.occurredAt | date:'medium' }}</span>
+            </div>
+            <p>{{ event.description }}</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+  </div>
+</div>
+
+<div *ngIf="isLoading" class="loading-state">
+  <div aria-busy="true">Loading candidate profile...</div>
+</div>

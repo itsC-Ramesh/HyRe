@@ -1,0 +1,47 @@
+<div class="requisitions-container">
+  <header class="req-header">
+    <div class="header-text">
+      <h2>Active Requisitions</h2>
+      <p>Manage open jobs and track hiring progress.</p>
+    </div>
+    <div class="header-actions">
+      <button class="primary-btn">
+        <lucide-icon name="plus"></lucide-icon> New Requisition
+      </button>
+    </div>
+  </header>
+
+  <div *ngIf="isLoading" class="loading-state">
+    <div aria-busy="true">Loading requisitions...</div>
+  </div>
+
+  <div *ngIf="!isLoading" class="requisitions-grid">
+    <div class="req-card" *ngFor="let req of requisitions" (click)="openPipeline(req.id)">
+      <div class="req-card-header">
+        <h3>{{ req.title }}</h3>
+        <span class="badge" [ngClass]="getStatusBadgeClass(req.status)">
+          {{ getStatusLabel(req.status) }}
+        </span>
+      </div>
+      <div class="req-card-body">
+        <div class="info-row">
+          <span class="label">Department:</span>
+          <span class="value">{{ req.department }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Headcount:</span>
+          <span class="value">{{ req.headcount }}</span>
+        </div>
+        <div class="info-row" *ngIf="req.salaryMin && req.salaryMax">
+          <span class="label">Salary:</span>
+          <span class="value">${{ req.salaryMin | number }} - ${{ req.salaryMax | number }}</span>
+        </div>
+      </div>
+      <div class="req-card-footer">
+        <button class="secondary-btn" (click)="openPipeline(req.id); $event.stopPropagation()">
+          View Pipeline
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
