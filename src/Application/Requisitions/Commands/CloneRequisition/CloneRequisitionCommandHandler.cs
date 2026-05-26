@@ -25,6 +25,7 @@ public class CloneRequisitionCommandHandler(IRequisitionRepository repository, I
             JdText = original.JdText,
             SalaryMin = original.SalaryMin,
             SalaryMax = original.SalaryMax,
+            Headcount = original.Headcount,
             Status = RequisitionStatus.Draft,
             OwnerId = currentUser.Id ?? string.Empty // Assign to the current user who cloned it
         };
