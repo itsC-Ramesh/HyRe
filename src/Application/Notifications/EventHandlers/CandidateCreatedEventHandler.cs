@@ -10,15 +10,18 @@ public class CandidateCreatedEventHandler : INotificationHandler<CandidateCreate
     private readonly IApplicationDbContext _context;
     private readonly IBackgroundJobService _jobService;
     private readonly IEmailService _emailService;
+    private readonly ITemplateEngine _templateEngine;
 
     public CandidateCreatedEventHandler(
         IApplicationDbContext context,
         IBackgroundJobService jobService,
-        IEmailService emailService)
+        IEmailService emailService,
+        ITemplateEngine templateEngine)
     {
         _context = context;
         _jobService = jobService;
         _emailService = emailService;
+        _templateEngine = templateEngine;
     }
 
     public async Task Handle(CandidateCreatedEvent notification, CancellationToken cancellationToken)
@@ -28,16 +31,14 @@ public class CandidateCreatedEventHandler : INotificationHandler<CandidateCreate
 
         if (candidate == null) return;
 
-        var emailSubject = "Application Received - HyRe";
-        var emailBody = $@"Hi {candidate.Name},
+        var variables = new Dictionary<string, string>
+        {
+            { "CandidateName", candidate.Name },
+            { "RequisitionTitle", "Any Position" }
+        };
 
-Thank you for applying to our open position! We have successfully received your application.
+        var templateResult = await _templateEngine.RenderAsync(RC.HyRe.Domain.Enums.TemplateCategory.ApplicationAck, variables, cancellationToken);
 
-Our hiring team will review your profile and get back to you shortly.
-
-Best regards,
-The Hiring Team";
-
-        _jobService.Enqueue(() => _emailService.SendEmailAsync(candidate.Email, emailSubject, emailBody, CancellationToken.None));
+        _jobService.Enqueue(() => _emailService.SendEmailAsync(candidate.Email, templateResult.Subject, templateResult.Body, CancellationToken.None));
     }
 }

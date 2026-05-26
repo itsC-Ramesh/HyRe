@@ -11,17 +11,20 @@ public class InterviewBookedEventHandler : INotificationHandler<InterviewBookedE
     private readonly INotificationService _notificationService;
     private readonly IEmailService _emailService;
     private readonly IBackgroundJobService _jobService;
+    private readonly ITemplateEngine _templateEngine;
 
     public InterviewBookedEventHandler(
         IApplicationDbContext context,
         INotificationService notificationService,
         IEmailService emailService,
-        IBackgroundJobService jobService)
+        IBackgroundJobService jobService,
+        ITemplateEngine templateEngine)
     {
         _context = context;
         _notificationService = notificationService;
         _emailService = emailService;
         _jobService = jobService;
+        _templateEngine = templateEngine;
     }
 
     public async Task Handle(InterviewBookedEvent notification, CancellationToken cancellationToken)
@@ -53,29 +56,18 @@ public class InterviewBookedEventHandler : INotificationHandler<InterviewBookedE
             cancellationToken);
 
         // 2. Send email to the candidate
-        var subject = $"Interview Scheduled - {interview.Application.Requisition.Title}";
-        var body = $@"Hi {interview.Application.Candidate.Name},
-
-Your interview for the {interview.Application.Requisition.Title} position has been scheduled.
-
-Date and Time: {interview.ScheduledAt:f}
-Duration: {interview.DurationMin} minutes
-Interview Type: {interview.Type}";
-
-        if (!string.IsNullOrEmpty(interview.MeetingLink))
+        var variables = new Dictionary<string, string>
         {
-            body += $@"
+            { "CandidateName", interview.Application.Candidate.Name },
+            { "RequisitionTitle", interview.Application.Requisition.Title },
+            { "ScheduledAt", interview.ScheduledAt.ToString("f") },
+            { "DurationMinutes", interview.DurationMin.ToString() },
+            { "InterviewType", interview.Type.ToString() },
+            { "MeetingLink", interview.MeetingLink ?? "TBD" }
+        };
 
-Meeting Link: {interview.MeetingLink}";
-        }
+        var templateResult = await _templateEngine.RenderAsync(RC.HyRe.Domain.Enums.TemplateCategory.InterviewScheduled, variables, cancellationToken);
 
-        body += @"
-
-Please make sure to be available at the scheduled time.
-
-Best regards,
-The Hiring Team";
-
-        _jobService.Enqueue(() => _emailService.SendEmailAsync(interview.Application.Candidate.Email, subject, body, CancellationToken.None));
+        _jobService.Enqueue(() => _emailService.SendEmailAsync(interview.Application.Candidate.Email, templateResult.Subject, templateResult.Body, CancellationToken.None));
     }
 }

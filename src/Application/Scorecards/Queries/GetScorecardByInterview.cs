@@ -13,10 +13,12 @@ public class GetScorecardByInterviewHandler
     : IRequestHandler<GetScorecardByInterview, Result<ScorecardDto>>
 {
     private readonly IApplicationDbContext _context;
+    private readonly IUser _user;
 
-    public GetScorecardByInterviewHandler(IApplicationDbContext context)
+    public GetScorecardByInterviewHandler(IApplicationDbContext context, IUser user)
     {
         _context = context;
+        _user = user;
     }
 
     public async Task<Result<ScorecardDto>> Handle(
@@ -24,7 +26,7 @@ public class GetScorecardByInterviewHandler
     {
         var scorecard = await _context.Scorecards
             .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.InterviewId == request.InterviewId, ct);
+            .FirstOrDefaultAsync(s => s.InterviewId == request.InterviewId && s.InterviewerId == _user.Id, ct);
 
         if (scorecard is null)
             return Result.Failure<ScorecardDto>("Scorecard not found.");

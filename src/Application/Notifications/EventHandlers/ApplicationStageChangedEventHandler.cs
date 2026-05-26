@@ -15,19 +15,22 @@ public class ApplicationStageChangedEventHandler : INotificationHandler<Applicat
     private readonly IEmailService _emailService;
     private readonly INotificationService _notificationService;
     private readonly IConfiguration _configuration;
+    private readonly ITemplateEngine _templateEngine;
 
     public ApplicationStageChangedEventHandler(
         IApplicationDbContext context,
         IBackgroundJobService jobService,
         IEmailService emailService,
         INotificationService notificationService,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ITemplateEngine templateEngine)
     {
         _context = context;
         _jobService = jobService;
         _emailService = emailService;
         _notificationService = notificationService;
         _configuration = configuration;
+        _templateEngine = templateEngine;
     }
 
     public async Task Handle(ApplicationStageChangedEvent notification, CancellationToken cancellationToken)
@@ -58,57 +61,27 @@ public class ApplicationStageChangedEventHandler : INotificationHandler<Applicat
         }
 
         var portalUrl = _configuration["CandidatePortalUrl"] ?? "https://localhost:4200";
-        string subject;
-        string body;
-
-        switch (notification.NewStage)
+        var variables = new Dictionary<string, string>
         {
-            case ApplicationStage.Screened:
-            case ApplicationStage.Interview:
-                subject = $"Invitation to Interview - {application.Requisition.Title}";
-                body = $@"Hi {application.Candidate.Name},
+            { "CandidateName", application.Candidate.Name },
+            { "RequisitionTitle", application.Requisition.Title },
+            { "ScheduleLink", $"{portalUrl}/portal/schedule/{application.Id}" },
+            { "PortalUrl", $"{portalUrl}/portal/offer/{application.Id}" }
+        };
 
-Great news! We would like to invite you to interview for the {application.Requisition.Title} role.
+        TemplateCategory? category = notification.NewStage switch
+        {
+            ApplicationStage.Screened or ApplicationStage.Interview => TemplateCategory.InterviewInvite,
+            ApplicationStage.Rejected => TemplateCategory.Rejection,
+            ApplicationStage.Offer => TemplateCategory.OfferLetter,
+            _ => null
+        };
 
-Please use the following link to select a convenient slot from our team's calendar:
-{portalUrl}/portal/schedule/{application.Id}
+        if (!category.HasValue)
+            return;
 
-Best regards,
-The Hiring Team";
-                break;
+        var templateResult = await _templateEngine.RenderAsync(category.Value, variables, cancellationToken);
 
-            case ApplicationStage.Rejected:
-                subject = $"Update on your application for {application.Requisition.Title}";
-                body = $@"Hi {application.Candidate.Name},
-
-Thank you for taking the time to apply and speak with us about the {application.Requisition.Title} position.
-
-Unfortunately, we have decided to proceed with other candidates whose experience more closely aligns with our current needs. We will keep your resume on file for future opportunities.
-
-We wish you all the best in your search.
-
-Sincerely,
-The Hiring Team";
-                break;
-
-            case ApplicationStage.Offer:
-                subject = $"Offer Details - {application.Requisition.Title}";
-                body = $@"Hi {application.Candidate.Name},
-
-We are thrilled to extend an offer for the {application.Requisition.Title} position!
-
-We have generated your formal offer details. Please log in to your candidate portal to review and sign:
-{portalUrl}/portal/offer/{application.Id}
-
-Best regards,
-The Hiring Team";
-                break;
-
-            default:
-                // No candidate email for applied / hired in this handler
-                return;
-        }
-
-        _jobService.Enqueue(() => _emailService.SendEmailAsync(application.Candidate.Email, subject, body, CancellationToken.None));
+        _jobService.Enqueue(() => _emailService.SendEmailAsync(application.Candidate.Email, templateResult.Subject, templateResult.Body, CancellationToken.None));
     }
 }
