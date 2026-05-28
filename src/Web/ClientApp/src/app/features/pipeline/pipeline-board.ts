@@ -1,6 +1,6 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { CdkDragDrop, CdkDropList, CdkDrag, transferArrayItem } from '@angular/cdk/drag-drop';
+import { CdkDragDrop, CdkDropList, transferArrayItem } from '@angular/cdk/drag-drop';
 import { PipelineService } from './pipeline.service';
 import { PipelineDto, PipelineApplicationCard, PipelineStageGroup } from './pipeline.models';
 import { PipelineCard } from './pipeline-card';
@@ -14,7 +14,7 @@ const STAGE_ORDER = ['Applied', 'Screened', 'Interview', 'Offer', 'Hired'];
 @Component({
   selector: 'app-pipeline-board',
   standalone: true,
-  imports: [RouterLink, CdkDropList, CdkDrag, PipelineCard, Button, Badge, Spinner],
+  imports: [RouterLink, CdkDropList, PipelineCard, Button, Badge, Spinner],
   template: `
     @if (loading()) {
       <div class="flex justify-center py-12">
