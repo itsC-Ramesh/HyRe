@@ -1,6 +1,7 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 import { CandidateService } from './candidate.service';
 import { CandidateSource } from './candidate.models';
 import { Card } from '../../shared/ui/card/card';
@@ -11,6 +12,7 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
   selector: 'app-candidate-form',
   standalone: true,
   imports: [FormsModule, Card, Button],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="max-w-3xl mx-auto">
       <h1 class="text-2xl font-bold text-gray-900 mb-6">
@@ -88,7 +90,7 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
             <app-button type="submit" [loading]="loading()">
               {{ isEdit() ? 'Update' : 'Create' }}
             </app-button>
-            <app-button variant="secondary" (click)="router.navigate(['/candidates'])">
+            <app-button variant="secondary" (click)="cancel()">
               Cancel
             </app-button>
           </div>
@@ -98,11 +100,12 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
   `,
   styles: `:host { display: block; }`,
 })
-export class CandidateForm implements OnInit {
+export class CandidateForm implements OnInit, OnDestroy {
   private candidateService = inject(CandidateService);
   private toastService = inject(ToastService);
   private route = inject(ActivatedRoute);
-  router = inject(Router);
+  private router = inject(Router);
+  private destroy$ = new Subject<void>();
 
   isEdit = signal(false);
   loading = signal(false);
@@ -116,11 +119,20 @@ export class CandidateForm implements OnInit {
     sourceDetail: '',
   };
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  cancel(): void {
+    this.router.navigate(['/candidates']);
+  }
+
   ngOnInit(): void {
     this.candidateId = this.route.snapshot.params['id'];
     if (this.candidateId) {
       this.isEdit.set(true);
-      this.candidateService.getById(this.candidateId).subscribe({
+      this.candidateService.getById(this.candidateId).pipe(takeUntil(this.destroy$)).subscribe({
         next: (c) => {
           this.form = {
             name: c.name,
@@ -152,7 +164,7 @@ export class CandidateForm implements OnInit {
     };
 
     if (this.isEdit()) {
-      this.candidateService.update(this.candidateId, payload).subscribe({
+      this.candidateService.update(this.candidateId, payload).pipe(takeUntil(this.destroy$)).subscribe({
         next: () => {
           this.toastService.success('Candidate updated');
           this.router.navigate(['/candidates']);
@@ -163,7 +175,7 @@ export class CandidateForm implements OnInit {
         },
       });
     } else {
-      this.candidateService.create(payload).subscribe({
+      this.candidateService.create(payload).pipe(takeUntil(this.destroy$)).subscribe({
         next: () => {
           this.toastService.success('Candidate created');
           this.router.navigate(['/candidates']);

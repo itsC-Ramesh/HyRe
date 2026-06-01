@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, output } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ElementRef, inject, signal, computed, output } from '@angular/core';
 import { AuthService } from '../../auth/auth.service';
 import { NotificationBell } from '../../notifications/notification-bell';
 
@@ -6,6 +6,10 @@ import { NotificationBell } from '../../notifications/notification-bell';
   selector: 'app-header',
   standalone: true,
   imports: [NotificationBell],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:click)': 'onDocumentClick($event)',
+  },
   template: `
     <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6">
       <div class="flex items-center gap-4">
@@ -56,6 +60,7 @@ import { NotificationBell } from '../../notifications/notification-bell';
 })
 export class Header {
   private authService = inject(AuthService);
+  private el = inject(ElementRef);
 
   menuToggle = output<void>();
 
@@ -73,6 +78,12 @@ export class Header {
 
   toggleUserMenu(): void {
     this.userMenuOpen.update((o) => !o);
+  }
+
+  onDocumentClick(event: MouseEvent): void {
+    if (this.userMenuOpen() && !this.el.nativeElement.contains(event.target)) {
+      this.userMenuOpen.set(false);
+    }
   }
 
   logout(): void {

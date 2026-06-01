@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { Toast } from '../../../shared/ui/toast/toast';
@@ -7,6 +7,7 @@ import { Toast } from '../../../shared/ui/toast/toast';
   selector: 'app-candidate-layout',
   standalone: true,
   imports: [RouterOutlet, Toast],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col h-screen">
       <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">

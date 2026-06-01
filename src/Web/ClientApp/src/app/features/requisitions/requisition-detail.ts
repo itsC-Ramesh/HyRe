@@ -1,6 +1,8 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 import { RequisitionService } from './requisition.service';
 import { RequisitionDto } from './requisition.models';
 import { Card } from '../../shared/ui/card/card';
@@ -8,12 +10,12 @@ import { Button } from '../../shared/ui/button/button';
 import { Badge } from '../../shared/ui/badge/badge';
 import { Spinner } from '../../shared/ui/spinner/spinner';
 import { ToastService } from '../../shared/ui/toast/toast.service';
-import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-requisition-detail',
   standalone: true,
-  imports: [RouterLink, DatePipe, Card, Button, Badge, Spinner],
+  imports: [RouterLink, DatePipe, FormsModule, Card, Button, Badge, Spinner],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (loading()) {
       <div class="flex justify-center py-12">
@@ -124,29 +126,72 @@ import { AuthService } from '../../core/auth/auth.service';
         </div>
       </div>
     }
+
+    @if (rejectDialogOpen()) {
+      <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" (click)="rejectDialogOpen.set(false)">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6" (click)="$event.stopPropagation()">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Reject Requisition</h3>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Rejection Reason *</label>
+            <textarea
+              rows="4"
+              [ngModel]="rejectReason()"
+              (ngModelChange)="rejectReason.set($event)"
+              class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              placeholder="Enter reason for rejection..."
+            ></textarea>
+          </div>
+          <div class="flex justify-end gap-3">
+            <app-button variant="secondary" size="sm" (click)="rejectDialogOpen.set(false)">Cancel</app-button>
+            <app-button variant="danger" size="sm" [disabled]="!rejectReason()" (click)="confirmReject()">Reject</app-button>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (closeDialogOpen()) {
+      <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" (click)="closeDialogOpen.set(false)">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6" (click)="$event.stopPropagation()">
+          <h3 class="text-lg font-medium text-gray-900 mb-2">Close Requisition</h3>
+          <p class="text-sm text-gray-600 mb-6">Are you sure you want to close this requisition? This action can be undone by reopening.</p>
+          <div class="flex justify-end gap-3">
+            <app-button variant="secondary" size="sm" (click)="closeDialogOpen.set(false)">Cancel</app-button>
+            <app-button variant="danger" size="sm" (click)="confirmClose()">Close</app-button>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: `:host { display: block; }`,
 })
-export class RequisitionDetail implements OnInit {
+export class RequisitionDetail implements OnInit, OnDestroy {
   private requisitionService = inject(RequisitionService);
   private toastService = inject(ToastService);
-  private authService = inject(AuthService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private destroy$ = new Subject<void>();
 
   requisition = signal<RequisitionDto | null>(null);
   loading = signal(false);
   pipelineStages = signal<{ name: string; count: number }[]>([]);
   statusVariant = signal<'info' | 'success' | 'warning' | 'danger'>('info');
+  rejectDialogOpen = signal(false);
+  rejectReason = signal('');
+  closeDialogOpen = signal(false);
 
   ngOnInit(): void {
     const id = this.route.snapshot.params['id'];
     this.loadRequisition(id);
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   private loadRequisition(id: string): void {
     this.loading.set(true);
-    this.requisitionService.getById(id).subscribe({
+    this.requisitionService.getById(id).pipe(takeUntil(this.destroy$)).subscribe({
       next: (req) => {
         this.requisition.set(req);
         this.statusVariant.set(this.getStatusVariant(req.status));
@@ -174,7 +219,7 @@ export class RequisitionDetail implements OnInit {
   }
 
   submit(): void {
-    this.requisitionService.submit(this.requisition()!.id).subscribe({
+    this.requisitionService.submit(this.requisition()!.id).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.toastService.success('Submitted for approval');
         this.loadRequisition(this.requisition()!.id);
@@ -184,7 +229,7 @@ export class RequisitionDetail implements OnInit {
   }
 
   approve(): void {
-    this.requisitionService.approve(this.requisition()!.id).subscribe({
+    this.requisitionService.approve(this.requisition()!.id).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.toastService.success('Requisition approved');
         this.loadRequisition(this.requisition()!.id);
@@ -194,9 +239,15 @@ export class RequisitionDetail implements OnInit {
   }
 
   reject(): void {
-    const reason = prompt('Enter rejection reason:');
+    this.rejectReason.set('');
+    this.rejectDialogOpen.set(true);
+  }
+
+  confirmReject(): void {
+    const reason = this.rejectReason();
     if (!reason) return;
-    this.requisitionService.reject(this.requisition()!.id, reason).subscribe({
+    this.rejectDialogOpen.set(false);
+    this.requisitionService.reject(this.requisition()!.id, reason).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.toastService.success('Requisition rejected');
         this.loadRequisition(this.requisition()!.id);
@@ -206,7 +257,7 @@ export class RequisitionDetail implements OnInit {
   }
 
   hold(): void {
-    this.requisitionService.hold(this.requisition()!.id).subscribe({
+    this.requisitionService.hold(this.requisition()!.id).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.toastService.success('Requisition put on hold');
         this.loadRequisition(this.requisition()!.id);
@@ -216,8 +267,12 @@ export class RequisitionDetail implements OnInit {
   }
 
   close(): void {
-    if (!confirm('Are you sure you want to close this requisition?')) return;
-    this.requisitionService.close(this.requisition()!.id).subscribe({
+    this.closeDialogOpen.set(true);
+  }
+
+  confirmClose(): void {
+    this.closeDialogOpen.set(false);
+    this.requisitionService.close(this.requisition()!.id).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.toastService.success('Requisition closed');
         this.loadRequisition(this.requisition()!.id);
@@ -227,7 +282,7 @@ export class RequisitionDetail implements OnInit {
   }
 
   reopen(): void {
-    this.requisitionService.submit(this.requisition()!.id).subscribe({
+    this.requisitionService.submit(this.requisition()!.id).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.toastService.success('Requisition reopened');
         this.loadRequisition(this.requisition()!.id);
@@ -237,7 +292,7 @@ export class RequisitionDetail implements OnInit {
   }
 
   clone(): void {
-    this.requisitionService.clone(this.requisition()!.id).subscribe({
+    this.requisitionService.clone(this.requisition()!.id).pipe(takeUntil(this.destroy$)).subscribe({
       next: (newId) => {
         this.toastService.success('Requisition cloned');
         this.router.navigate(['/requisitions', newId]);

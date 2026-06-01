@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Sidebar } from '../sidebar/sidebar';
 import { Header } from '../header/header';
@@ -8,6 +8,7 @@ import { Toast } from '../../../shared/ui/toast/toast';
   selector: 'app-internal-layout',
   standalone: true,
   imports: [RouterOutlet, Sidebar, Header, Toast],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex h-screen overflow-hidden">
       <app-sidebar #sidebar />

@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth/auth.service';
@@ -9,6 +9,7 @@ import { Button } from '../../shared/ui/button/button';
   selector: 'app-login',
   standalone: true,
   imports: [FormsModule, Card, Button],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
       <div class="max-w-md w-full">

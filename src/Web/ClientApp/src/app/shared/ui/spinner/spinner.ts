@@ -1,8 +1,9 @@
-import { Component, input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input } from '@angular/core';
 
 @Component({
   selector: 'app-spinner',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (fullPage()) {
       <div class="fixed inset-0 flex items-center justify-center bg-white/80 z-50">

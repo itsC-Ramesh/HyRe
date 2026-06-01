@@ -1,9 +1,13 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ElementRef, inject, signal } from '@angular/core';
 import { NotificationService } from './notification.service';
 
 @Component({
   selector: 'app-notification-bell',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:click)': 'onDocumentClick($event)',
+  },
   template: `
     <div class="relative">
       <button
@@ -61,12 +65,19 @@ import { NotificationService } from './notification.service';
 })
 export class NotificationBell {
   notifService = inject(NotificationService);
+  private el = inject(ElementRef);
   isOpen = signal(false);
 
   toggleDropdown(): void {
     this.isOpen.update((o) => !o);
     if (this.isOpen()) {
       this.notifService.fetchNotifications();
+    }
+  }
+
+  onDocumentClick(event: MouseEvent): void {
+    if (this.isOpen() && !this.el.nativeElement.contains(event.target)) {
+      this.isOpen.set(false);
     }
   }
 

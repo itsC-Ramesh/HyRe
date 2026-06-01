@@ -1,7 +1,8 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 import { CandidateService } from './candidate.service';
 import { CandidateDto } from './candidate.models';
 import { RequisitionService } from '../requisitions/requisition.service';
@@ -16,6 +17,7 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
   selector: 'app-candidate-detail',
   standalone: true,
   imports: [RouterLink, DatePipe, FormsModule, Card, Button, Badge, Spinner],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (loading()) {
       <div class="flex justify-center py-12">
@@ -56,7 +58,7 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
                       @for (app of candidate()!.applications; track app.applicationId) {
                         <tr
                           class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
-                          (click)="router.navigate(['/pipeline', app.requisitionId])"
+                          (click)="navigateToPipeline(app.requisitionId)"
                         >
                           <td class="py-2 px-3 text-gray-900">{{ app.requisitionTitle }}</td>
                           <td class="py-2 px-3">
@@ -132,12 +134,13 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
   `,
   styles: `:host { display: block; }`,
 })
-export class CandidateDetail implements OnInit {
+export class CandidateDetail implements OnInit, OnDestroy {
   private candidateService = inject(CandidateService);
   private requisitionService = inject(RequisitionService);
   private toastService = inject(ToastService);
   private route = inject(ActivatedRoute);
-  router = inject(Router);
+  private router = inject(Router);
+  private destroy$ = new Subject<void>();
 
   candidate = signal<CandidateDto | null>(null);
   loading = signal(false);
@@ -152,7 +155,7 @@ export class CandidateDetail implements OnInit {
 
   private loadCandidate(id: string): void {
     this.loading.set(true);
-    this.candidateService.getById(id).subscribe({
+    this.candidateService.getById(id).pipe(takeUntil(this.destroy$)).subscribe({
       next: (c) => {
         this.candidate.set(c);
         this.loading.set(false);
@@ -165,7 +168,7 @@ export class CandidateDetail implements OnInit {
   }
 
   private loadOpenRequisitions(): void {
-    this.requisitionService.getAll('open', undefined, 1, 100).subscribe({
+    this.requisitionService.getAll('open', undefined, 1, 100).pipe(takeUntil(this.destroy$)).subscribe({
       next: (res) => this.openRequisitions.set(res.items),
       error: () => {},
     });
@@ -173,7 +176,7 @@ export class CandidateDetail implements OnInit {
 
   applyToRequisition(): void {
     if (!this.selectedRequisitionId) return;
-    this.candidateService.applyToRequisition(this.candidate()!.id, this.selectedRequisitionId).subscribe({
+    this.candidateService.applyToRequisition(this.candidate()!.id, this.selectedRequisitionId).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.toastService.success('Applied to requisition');
         this.selectedRequisitionId = '';
@@ -181,6 +184,15 @@ export class CandidateDetail implements OnInit {
       },
       error: () => this.toastService.error('Failed to apply'),
     });
+  }
+
+  navigateToPipeline(requisitionId: string): void {
+    this.router.navigate(['/pipeline', requisitionId]);
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   stageVariant(stage: string): 'info' | 'success' | 'warning' | 'danger' {

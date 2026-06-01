@@ -1,6 +1,7 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CdkDragDrop, CdkDropList, transferArrayItem } from '@angular/cdk/drag-drop';
+import { Subject, takeUntil } from 'rxjs';
 import { PipelineService } from './pipeline.service';
 import { PipelineDto, PipelineApplicationCard, PipelineStageGroup } from './pipeline.models';
 import { PipelineCard } from './pipeline-card';
@@ -15,6 +16,7 @@ const STAGE_ORDER = ['Applied', 'Screened', 'Interview', 'Offer', 'Hired'];
   selector: 'app-pipeline-board',
   standalone: true,
   imports: [RouterLink, CdkDropList, PipelineCard, Button, Badge, Spinner],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (loading()) {
       <div class="flex justify-center py-12">
@@ -97,10 +99,11 @@ const STAGE_ORDER = ['Applied', 'Screened', 'Interview', 'Offer', 'Hired'];
   `,
   styles: `:host { display: block; }`,
 })
-export class PipelineBoard implements OnInit {
+export class PipelineBoard implements OnInit, OnDestroy {
   private pipelineService = inject(PipelineService);
   private toastService = inject(ToastService);
   private route = inject(ActivatedRoute);
+  private destroy$ = new Subject<void>();
   private router = inject(Router);
 
   pipeline = signal<PipelineDto | null>(null);
@@ -112,6 +115,11 @@ export class PipelineBoard implements OnInit {
 
   sortPredicate = () => false;
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   ngOnInit(): void {
     const requisitionId = this.route.snapshot.params['requisitionId'];
     this.loadPipeline(requisitionId);
@@ -119,7 +127,7 @@ export class PipelineBoard implements OnInit {
 
   private loadPipeline(requisitionId: string): void {
     this.loading.set(true);
-    this.pipelineService.getByRequisition(requisitionId).subscribe({
+    this.pipelineService.getByRequisition(requisitionId).pipe(takeUntil(this.destroy$)).subscribe({
       next: (data) => {
         this.pipeline.set(data);
         this.organizeStages(data);
@@ -163,6 +171,11 @@ export class PipelineBoard implements OnInit {
     const app = event.item.data as PipelineApplicationCard;
     const newStage = event.container.id;
 
+    if (newStage === 'Rejected' && !confirm(`Move ${app.candidateName} to Rejected?`)) {
+      this.refresh();
+      return;
+    }
+
     transferArrayItem(
       event.previousContainer.data,
       event.container.data,
@@ -170,7 +183,7 @@ export class PipelineBoard implements OnInit {
       event.currentIndex,
     );
 
-    this.pipelineService.advance(app.applicationId, newStage).subscribe({
+    this.pipelineService.advance(app.applicationId, newStage).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.toastService.success('Moved to ' + newStage);
         this.refresh();
@@ -206,7 +219,7 @@ export class PipelineBoard implements OnInit {
     }
 
     for (const [stage, appIds] of groups) {
-      this.pipelineService.bulkAdvance(appIds, stage).subscribe({
+      this.pipelineService.bulkAdvance(appIds, stage).pipe(takeUntil(this.destroy$)).subscribe({
         next: () => {
           this.toastService.success('Moved ' + appIds.length + ' to ' + stage);
           this.selectedIds.set([]);

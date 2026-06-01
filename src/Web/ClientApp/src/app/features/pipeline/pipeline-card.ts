@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input } from '@angular/core';
 import { CdkDrag } from '@angular/cdk/drag-drop';
 import { RouterLink } from '@angular/router';
 import { PipelineApplicationCard } from './pipeline.models';
@@ -7,6 +7,7 @@ import { PipelineApplicationCard } from './pipeline.models';
   selector: 'app-pipeline-card',
   standalone: true,
   imports: [CdkDrag, RouterLink],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div
       cdkDrag

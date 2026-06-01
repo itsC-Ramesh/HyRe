@@ -1,4 +1,4 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
 import { AuthService } from '../../core/auth/auth.service';
 import { Card } from '../../shared/ui/card/card';
 
@@ -6,6 +6,7 @@ import { Card } from '../../shared/ui/card/card';
   selector: 'app-dashboard',
   standalone: true,
   imports: [Card],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="max-w-4xl mx-auto">
       <h1 class="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>

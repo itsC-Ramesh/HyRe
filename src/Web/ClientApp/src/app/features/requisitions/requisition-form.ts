@@ -1,6 +1,7 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 import { RequisitionService } from './requisition.service';
 import { Card } from '../../shared/ui/card/card';
 import { Button } from '../../shared/ui/button/button';
@@ -10,6 +11,7 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
   selector: 'app-requisition-form',
   standalone: true,
   imports: [FormsModule, Card, Button],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="max-w-3xl mx-auto">
       <h1 class="text-2xl font-bold text-gray-900 mb-6">
@@ -92,7 +94,7 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
             <app-button type="submit" [loading]="loading()">
               {{ isEdit() ? 'Update' : 'Create' }}
             </app-button>
-            <app-button variant="secondary" (click)="router.navigate(['/requisitions'])">
+            <app-button variant="secondary" (click)="cancel()">
               Cancel
             </app-button>
           </div>
@@ -102,11 +104,12 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
   `,
   styles: `:host { display: block; }`,
 })
-export class RequisitionForm implements OnInit {
+export class RequisitionForm implements OnInit, OnDestroy {
   private requisitionService = inject(RequisitionService);
   private toastService = inject(ToastService);
   private route = inject(ActivatedRoute);
-  router = inject(Router);
+  private router = inject(Router);
+  private destroy$ = new Subject<void>();
 
   isEdit = signal(false);
   loading = signal(false);
@@ -121,11 +124,20 @@ export class RequisitionForm implements OnInit {
     headcount: 1,
   };
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  cancel(): void {
+    this.router.navigate(['/requisitions']);
+  }
+
   ngOnInit(): void {
     this.requisitionId = this.route.snapshot.params['id'];
     if (this.requisitionId) {
       this.isEdit.set(true);
-      this.requisitionService.getById(this.requisitionId).subscribe({
+      this.requisitionService.getById(this.requisitionId).pipe(takeUntil(this.destroy$)).subscribe({
         next: (req) => {
           this.form = {
             title: req.title,
@@ -159,7 +171,7 @@ export class RequisitionForm implements OnInit {
     };
 
     if (this.isEdit()) {
-      this.requisitionService.update(this.requisitionId, payload).subscribe({
+      this.requisitionService.update(this.requisitionId, payload).pipe(takeUntil(this.destroy$)).subscribe({
         next: () => {
           this.toastService.success('Requisition updated');
           this.router.navigate(['/requisitions']);
@@ -170,7 +182,7 @@ export class RequisitionForm implements OnInit {
         },
       });
     } else {
-      this.requisitionService.create(payload).subscribe({
+      this.requisitionService.create(payload).pipe(takeUntil(this.destroy$)).subscribe({
         next: () => {
           this.toastService.success('Requisition created');
           this.router.navigate(['/requisitions']);

@@ -4,6 +4,8 @@ import { catchError, from, switchMap, throwError } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { AuthState } from '../auth/auth.state';
 
+let refreshInProgress: Promise<boolean> | null = null;
+
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const authState = inject(AuthState);
@@ -11,7 +13,13 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       if (error.status === 401 && authState.accessToken()) {
-        return from(authService.refreshToken()).pipe(
+        if (!refreshInProgress) {
+          refreshInProgress = authService.refreshToken().finally(() => {
+            refreshInProgress = null;
+          });
+        }
+
+        return from(refreshInProgress).pipe(
           switchMap((success) => {
             if (success) {
               const token = authState.accessToken();

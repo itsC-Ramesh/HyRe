@@ -1,7 +1,8 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
+import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { RequisitionService } from './requisition.service';
 import { RequisitionDto, PaginatedRequisitions } from './requisition.models';
 import { Card } from '../../shared/ui/card/card';
@@ -14,6 +15,7 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
   selector: 'app-requisition-list',
   standalone: true,
   imports: [RouterLink, FormsModule, DatePipe, Card, Button, Badge, Spinner],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="max-w-7xl mx-auto">
       <div class="flex items-center justify-between mb-6">
@@ -25,7 +27,7 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
         <div class="flex gap-4 mb-4">
           <select
             [(ngModel)]="statusFilter"
-            (ngModelChange)="currentPage = 1; loadRequisitions()"
+            (ngModelChange)="onFilterChange()"
             class="rounded-md border border-gray-300 px-3 py-2 text-sm"
           >
             <option value="">All Statuses</option>
@@ -39,7 +41,7 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
             type="text"
             placeholder="Filter by department..."
             [(ngModel)]="departmentFilter"
-            (ngModelChange)="currentPage = 1; loadRequisitions()"
+            (ngModelChange)="onFilterChange()"
             class="rounded-md border border-gray-300 px-3 py-2 text-sm w-64"
           />
         </div>
@@ -65,7 +67,7 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
                 @for (req of data()?.items ?? []; track req.id) {
                   <tr
                     class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
-                    (click)="router.navigate(['/requisitions', req.id])"
+                    (click)="navigateToRequisition(req.id)"
                   >
                     <td class="py-3 px-4 font-medium text-gray-900">{{ req.title }}</td>
                     <td class="py-3 px-4 text-gray-600">{{ req.department }}</td>
@@ -113,10 +115,12 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
   `,
   styles: `:host { display: block; }`,
 })
-export class RequisitionList implements OnInit {
+export class RequisitionList implements OnInit, OnDestroy {
   private requisitionService = inject(RequisitionService);
   private toastService = inject(ToastService);
-  router = inject(Router);
+  private destroy$ = new Subject<void>();
+  private filterChange$ = new Subject<void>();
+  private router = inject(Router);
 
   data = signal<PaginatedRequisitions | null>(null);
   loading = signal(false);
@@ -125,13 +129,31 @@ export class RequisitionList implements OnInit {
   currentPage = 1;
 
   ngOnInit(): void {
+    this.filterChange$.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$),
+    ).subscribe(() => {
+      this.currentPage = 1;
+      this.loadRequisitions();
+    });
     this.loadRequisitions();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  onFilterChange(): void {
+    this.filterChange$.next();
   }
 
   loadRequisitions(): void {
     this.loading.set(true);
     this.requisitionService
       .getAll(this.statusFilter || undefined, this.departmentFilter || undefined, this.currentPage)
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (res) => {
           this.data.set(res);
@@ -158,6 +180,10 @@ export class RequisitionList implements OnInit {
       closed: 'danger',
     };
     return map[status] ?? 'info';
+  }
+
+  navigateToRequisition(id: string): void {
+    this.router.navigate(['/requisitions', id]);
   }
 
   totalPipeline(req: RequisitionDto): number {

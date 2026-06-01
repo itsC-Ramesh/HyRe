@@ -77,9 +77,41 @@ export const routes: Routes = [
       // Pipeline
       {
         path: 'pipeline/:requisitionId',
-        canActivate: [permissionGuard('pipeline:read')],
+        canActivate: [permissionGuard('candidates:read')],
         loadComponent: () =>
           import('./features/pipeline/pipeline-board').then((m) => m.PipelineBoard),
+      },
+      // Interviews
+      {
+        path: 'interviews',
+        canActivate: [permissionGuard('candidates:read')],
+        loadComponent: () =>
+          import('./features/interviews/interview-list').then((m) => m.InterviewList),
+      },
+      {
+        path: 'interviews/schedule',
+        canActivate: [permissionGuard('candidates:read')],
+        loadComponent: () =>
+          import('./features/interviews/interview-schedule').then((m) => m.InterviewSchedule),
+      },
+      {
+        path: 'interviews/availability',
+        canActivate: [permissionGuard('candidates:read')],
+        loadComponent: () =>
+          import('./features/interviews/interview-availability').then((m) => m.InterviewAvailability),
+      },
+      // Scorecards
+      {
+        path: 'scorecards/my',
+        canActivate: [permissionGuard('candidates:read')],
+        loadComponent: () =>
+          import('./features/scorecards/my-scorecards').then((m) => m.MyScorecards),
+      },
+      {
+        path: 'scorecards/:id',
+        canActivate: [permissionGuard('candidates:read')],
+        loadComponent: () =>
+          import('./features/scorecards/scorecard-form').then((m) => m.ScorecardForm),
       },
     ],
   },

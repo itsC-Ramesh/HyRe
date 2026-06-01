@@ -1,7 +1,8 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
+import { Subject, takeUntil } from 'rxjs';
 import { CandidateService } from './candidate.service';
 import { PaginatedCandidates } from './candidate.models';
 import { Card } from '../../shared/ui/card/card';
@@ -14,6 +15,7 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
   selector: 'app-candidate-list',
   standalone: true,
   imports: [RouterLink, FormsModule, DatePipe, Card, Button, Badge, Spinner],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="max-w-7xl mx-auto">
       <div class="flex items-center justify-between mb-6">
@@ -22,14 +24,15 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
       </div>
 
       <app-card>
-        <div class="mb-4">
+        <div class="flex gap-3 mb-4">
           <input
             type="text"
             placeholder="Search by name..."
             [(ngModel)]="searchQuery"
-            (ngModelChange)="loadCandidates()"
+            (keyup.enter)="currentPage = 1; loadCandidates()"
             class="rounded-md border border-gray-300 px-3 py-2 text-sm w-64"
           />
+          <app-button variant="secondary" size="sm" (click)="currentPage = 1; loadCandidates()">Search</app-button>
         </div>
 
         @if (loading()) {
@@ -52,7 +55,7 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
                 @for (candidate of data()?.items ?? []; track candidate.id) {
                   <tr
                     class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
-                    (click)="router.navigate(['/candidates', candidate.id])"
+                    (click)="navigateToCandidate(candidate.id)"
                   >
                     <td class="py-3 px-4 font-medium text-gray-900">{{ candidate.name }}</td>
                     <td class="py-3 px-4 text-gray-600">{{ candidate.email }}</td>
@@ -103,10 +106,11 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
   `,
   styles: `:host { display: block; }`,
 })
-export class CandidateList implements OnInit {
+export class CandidateList implements OnInit, OnDestroy {
   private candidateService = inject(CandidateService);
   private toastService = inject(ToastService);
-  router = inject(Router);
+  private router = inject(Router);
+  private destroy$ = new Subject<void>();
 
   data = signal<PaginatedCandidates | null>(null);
   loading = signal(false);
@@ -119,7 +123,7 @@ export class CandidateList implements OnInit {
 
   loadCandidates(): void {
     this.loading.set(true);
-    this.candidateService.getAll(this.searchQuery || undefined, this.currentPage).subscribe({
+    this.candidateService.getAll(this.searchQuery || undefined, this.currentPage).pipe(takeUntil(this.destroy$)).subscribe({
       next: (res) => {
         this.data.set(res);
         this.loading.set(false);
@@ -134,5 +138,14 @@ export class CandidateList implements OnInit {
   goToPage(page: number): void {
     this.currentPage = page;
     this.loadCandidates();
+  }
+
+  navigateToCandidate(id: string): void {
+    this.router.navigate(['/candidates', id]);
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

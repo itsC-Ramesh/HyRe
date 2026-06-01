@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { NAV_ITEMS } from '../nav-items';
@@ -7,6 +7,7 @@ import { NAV_ITEMS } from '../nav-items';
   selector: 'app-sidebar',
   standalone: true,
   imports: [RouterLink, RouterLinkActive],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <aside [class]="sidebarClasses()">
       <div class="flex items-center h-16 px-4 border-b border-gray-200">
