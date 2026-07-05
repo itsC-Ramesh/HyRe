@@ -110,9 +110,9 @@ dotnet test
 
 Browser acceptance tests live under `tests/Web.AcceptanceTests` and use Playwright/Reqnroll. If Playwright browsers are not installed on a fresh machine, install them before running the acceptance suite.
 
-## Repository Status
+## Project Status
 
-HyRe is an active portfolio project focused on demonstrating production-oriented backend design, modern Angular UI structure, and local cloud-native development with .NET Aspire. The current codebase includes both completed hiring-platform modules and some template-origin test scaffolding that is being replaced as the product surface matures.
+HyRe is an active open project for building a modern hiring platform with production-oriented backend design, a structured Angular frontend, and local cloud-native development through .NET Aspire. Contributions, issues, and implementation ideas are welcome as the product surface matures.
 
 ## Why This Project Exists
 
